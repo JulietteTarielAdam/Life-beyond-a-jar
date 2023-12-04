@@ -19,7 +19,7 @@ library(car)
 library(DHARMa)
 
 # The loaded file is the Master.csv and not the excel Master.xlsx
-master <- read.table("Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
+master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
 
 # change order or name of factor levels
 master$Tank <- factor(master$Tank, levels = c("Jar", "Small", "Medium", "Large", "Barren")) 
