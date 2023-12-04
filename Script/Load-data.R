@@ -1,0 +1,78 @@
+# Packages
+## for data transformation
+library(tidyverse) 
+## for plots
+library(ggplot2) 
+theme_set(theme_classic())
+library(viridis)
+library(ggforce) # facet_wrap_paginate
+## for PCA analysis
+library(FactoMineR) 
+## for linear model analysis
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(easystats)
+library(fitdistrplus)
+library(glmmTMB)
+library(car)
+library(DHARMa)
+
+# The loaded file is the Master.csv and not the excel Master.xlsx
+master <- read.table("Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
+
+# change order or name of factor levels
+master$Tank <- factor(master$Tank, levels = c("Jar", "Small", "Medium", "Large", "Barren")) 
+master$Time <- factor(master$Time, levels = c("7:00 am", "10:00 am", "2:00 pm", "6:00 pm"))
+levels(master$Filter)
+levels(master$Filter) <- c("No-filter", "Filter")
+
+# vectors indicating which columns are the behavioural variables
+beh.cols <- c("Resting", "Swimming", "Hovering", "Sinking.Floating", "Stereotypic.swimming", "Nest.building", "Foraging",  "Interation.with.surface")
+beh.cols.full <- c(beh.cols, "Out.of.view")
+
+# function to transform the master file into data per fish per trial
+tf <- function(data, grouping, beh.cols, fct){
+  list <- split(data, data[,grouping])
+  list2 <- list[sapply(list, nrow)!=0] # filter empty list items
+  result <- lapply(list2,
+                   function(sub.data){
+                     temp <- fct(sub.data[, beh.cols])
+                     if(length(grouping)==1){
+                       output <- data.frame(unique(sub.data[,grouping]), data.frame(t(temp)))
+                       names(output)[1] <- grouping
+                     } else {
+                       output <- data.frame(unique(sub.data[,grouping]), data.frame(t(temp)))
+                     }
+                     output
+                   })
+  result2 <- do.call(rbind, result)
+  row.names(result2) <- NULL
+  result2
+}
+
+# creating the main data files
+## main file. All the behaviours summed for each trial
+grouping <- c("Fish","Tank","Order","Time", "Filter")
+fct <- function(x) colSums(x, na.rm = TRUE)
+data <- tf(master, grouping, beh.cols.full, fct) 
+## main file with up and down distinguished
+grouping <- c("Fish","Tank","Order","Time", "Up.Down", "Filter")
+dataUpDown <- tf(master, grouping, beh.cols.full, fct)
+
+# PCA
+pca <- PCA(data[,beh.cols], graph = FALSE, ncp=3, scale.unit = TRUE)
+data <- cbind(data, pca$ind$coord)
+names(data)[match(c("Dim.1", "Dim.2","Dim.3"), names(data))] <- c("pc1","pc2","pc3")
+
+# package renv to have a reproducible code by storing packages versions
+library(renv)
+renv::snapshot()
+
+# Transform some behavioural types into binary = presence/absence of this behaviour during a trial
+data$Foraging.bin <- factor(ifelse(data$Foraging !=0 , "Yes", "No"))
+data$SS.bin <- factor(ifelse(data$Stereotypic.swimming != 0, "Yes", "No"))
+data$Hovering.bin <- factor(ifelse(data$Hovering != 0, "Yes", "No"))
+data$Interacting.bin <- factor(ifelse(data$Interation.with.surface != 0, "Yes", "No"))
+data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
+data$SF.bin <- factor(ifelse(data$Sinking.Floating != 0, "Yes", "No"))

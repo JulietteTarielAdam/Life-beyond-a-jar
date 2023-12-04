@@ -1,0 +1,745 @@
+---
+title: "Analysis of Naomi's data by Juliette. Influence of the tank on Betta's behaviour."
+date: "`r Sys.Date()`"
+format: 
+   html:
+    embed-resources: true
+    self-contained-math: true
+editor_options: 
+  chunk_output_type: console
+knitr:
+  opts_chunk:
+    fig-align: center
+    out-width: "100%"
+---
+
+```{r}
+#| include: false
+source("Script/Load-data.R")
+source("Script/Functions/Plots.R")
+source("Script/Functions/Linear-model.R")
+```
+
+Remember that we decided to compare Jar/Small/Medium/Large among each other, and Large/Barren between each other, because Jar/Small/Medium and Barren differ by two factors: enrichment and size. 
+
+You fill find below the first row of tabs to click on (PCA, Swimming, etc) and for most of these tabs, a second row of tab to click on (Distribution, Plot, etc).
+
+::: {.panel-tabset}
+
+# Data description
+
+9 behaviours scored: Resting, Swimming, Hovering, Sinking/Floating, Stereotypic swimming, Nest building, Foraging, Interation with surface, Out of view. Out.of.view is a bit special because it is not a behaviour. During a 10 min trial = 600 sec, the fish's behaviour was assigned to one of the 9 behaviours, meaning that the behaviours are mutually exclusive (a fish can't be scored as nest building and interacting with the surface at the same time).
+
+After staying 3-7 days in a tank, the behaviour of all fish were scored by 4 trials in this tank. All trials occurred the same day at 4 different times (7 am, 10 am, 2 pm, 6 pm). 
+
+```{r}
+summary(data)
+
+# Number of observations per fish per tank
+data %>% group_by(Fish, Tank) %>%
+  summarise(n=n(), .groups = 'drop') %>%
+  spread(Tank,n) 
+
+# Number of observations per fish per time
+data %>% group_by(Fish, Time) %>%
+  summarise(n=n(), .groups = 'drop') %>%
+  spread(Time,n) 
+
+# Sum of all behaviours per trial
+data$total <- rowSums(dplyr::select(data, Resting:Out.of.view)) 
+sort(data$total) 
+```
+
+The sum of all behaviours should be 600 sec, it varies between `r min(data$total)` and `r max(data$total)`, but it is alright. 
+
+I inspected the data for data entry errors (sum of scored behaviours too low/high, column shifted, typos, inconsistent nb of observations per fish/time/tank...) and Naomi corrected them. 
+
+## Plots
+
+The mean value over multiple trials is plotted to only have one value per treatment. 
+
+```{r}
+#| column: page
+#| echo: false
+#| warning: false
+plot1("Tank")
+
+plot1("Tank","Fish") +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 1) + ggtitle("Per fish") 
+plot1("Tank","Fish") +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 2) + ggtitle("Per fish")
+plot1("Tank","Fish") +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 3) + ggtitle("Per fish")
+plot1("Tank","Fish") +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 4) + ggtitle("Per fish")
+
+plot1("Tank","Time") +  facet_wrap(~Time) + ggtitle("Per time")
+```
+
+## Table
+
+## Filter
+
+```{r}
+# nb of observations per tank with or without filter
+table(data$Tank, data$Filter)/4 
+# nb of observations per fish with or without filter
+table(data$Fish, data$Filter)/4 
+
+plot1("Filter", "Tank") +  facet_wrap(~Tank)
+```
+
+In my opinion, Filter needs to be included in all models as a control variable.
+
+## Order of trials
+
+Visual inspection of any trend in the order of trials, like for instance if there were more swimming during the 2nd trial whatever the tank was.
+
+```{r}
+#| echo: false
+plot_order(data, "Swimming")
+plot_order(data, "Resting")
+data %>% mutate(Foraging.bin = as.numeric(Foraging.bin)-1) %>% 
+plot_order(., "Foraging.bin")
+data %>% mutate(SS.bin = as.numeric(SS.bin)-1) %>% 
+plot_order(., "SS.bin")
+data %>% mutate(Nest.bin = as.numeric(Nest.bin)-1) %>% 
+plot_order(., "Nest.bin")
+```
+
+There was no apparent trend in the order of trials (for instance, fish did not perform more swimming at the 2nd trial whatever tank they were in).
+
+# PCA
+
+We run a PCA in order to:
+
++ Try to reduce the number of variables to analyse (even if we could analyse each behavioural type individually)
++ Determine which behavioural types are important to explain the variability between trials
++ See correlations between behavioural types
+
+The PCA did not help reduce the number of variables to analyse (see Analysis_PCA.html for more explanation) so I analysed the behavioural types separately + it allows to interpret differences between tanks quantitatively. I still plotted below the first 3 components, which explained 57% of variance in the data, to show the important variables and the correlations between variables. 
+
+```{r}
+plot(pca, choix = "var", axes = c(1,2)) 
+plot(pca, choix = "var", axes = c(1,3))
+```
+
+```{r}
+# Contribution to each principal component
+round(pca$var$cos2,2)
+# Extent to which each behavioural type contributes to the total variance explained by the first 3 components
+rowSums(pca$var$contrib)/3
+```
+
++ The 1st PCA component was driven by Resting (cos2 = 0.8), Swimming (0.7) and Foraging (0.3). Swimming and Foraging opposite to Resting. This first component could be interpret as "activity". If a fish spent a lot of time swimming and foraging during a trial, it was very little resting. This first component explained 25% of the variance in the data (as a reminder, the data is the time spent performing the different types of behaviour). So 1 quarter of the variance is a matter of activity. Keep in mind for the rest of the analyses that these behavioural types are correlated. 
+
+
++ The 2nd PCA component was driven by Hovering (cos2 = 0.5) and Stereotypic.swimming (0.5), and a bit by Interaction with surface (0.16). Hovering and Interacting.with.Surface opposite to Stereotypic.swimming. If the fish spent a lot of time hovering (and interacting with the surface), it was very little stereotypic swimming. This is interesting in my opinion. 
+
++ The 3rd PCA component was driven mainly by Nest building (cos2 = 0.6), and a bit by Foraging (0.16), Resting (0.14) and Stereotypic Swimming (0.13). Foraging and Resting opposite to Nest building and Stereotypic Swimming. If a fish spent time foraging and resting in a trial, it was little nest building and stereotypic swimming. This makes sense, it a fish is building a nest,it is an important task and needs to be finished, so it is not scattering its time with other activities. The apparent correlation between nest building and stereotypic swimming could be due to Jar where fish in this tank rarely engaged in nest building or stereotypic swimming. 
+
+Sinking/Floating contributed almost nothing to the first three components (2%) + did not correlate strongly with any of the component. Sinking/Floating was not important to explain the variability between trials.
+
+# Swimming
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Swimming)
+```
+
+## Plot 
+
+The first plot is to see the trend by tank. Big red dots is for the overall mean  by tank. Small black points are raw data = resting time for each trial. 
+
+The second plot is to see the trend by fish and by tank. Thick red line is the overall mean by tank. Thin black lines are the mean for each fish by tank. 
+
+```{r}
+#| warning: false
+plot_var(data, "Swimming")
+plot_var_fish2(data, "Swimming")
+```
+
+## Linear model 
+
+```{r}
+#| column: page
+mSwimming <- lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = data)
+lm_results(mSwimming)
+calc_contrasts(mSwimming)
+```
+
+Effect of Tank, Time and Filter! 
+
++ Tank. Large swam significantly more time than Jar, Small and Medium. Fish in fish in Large swan 93 sec [CI 45, 140] more than Jar (over a 600 sec trial), 79 sec [CI 32, 126] more than Small, and 81 sec [CI 39, 122] more than Medium. In addition,  fish in Large swam significantly more time (58 sec [CI 16, 101]) than fish in Barren. 
++ Time. Fish swim less in the afternoon.
++ Filter. Fish swim more with a filter in their tank.
+
+Repeatability is quite low (0.2)
+
+## Diagnosis
+
+```{r}
+lm_diagnosis(mSwimming)
+```
+
+The model seems good.
+
+## Up and down 
+
+```{r}
+dataUpDown %>% filter(Swimming!=0) %>% 
+ggplot(.,aes(y = Swimming, x = Tank, color = Up.Down)) +
+  geom_jitter(alpha=.5, position = position_dodge(0.5))+
+  stat_summary(fun = "mean", geom = "point", size = 4, position = position_dodge(0.5))
+```
+
+It seems that the tank has an influence on whether fish prefer swimming on the upper half or lower half of the tank.
+
+:::
+
+# Resting
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Resting)
+table(data$Resting==0)
+```
+
+Only 11 trials where the fish did not rest at all. 
+
+## Plot 
+
+```{r}
+#| warning: false
+plot_var(data, "Resting")
+plot_var_fish(data, "Resting")
+```
+
+## Linear model 
+
+```{r}
+#| column: page
+mResting <- lmer(Resting ~ Tank + Time + Filter + (1|Fish), data = data)
+lm_results(mResting)
+calc_contrasts(mResting)
+```
+
+Effect of Tank and Time.
+
++ Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 110 sec [CI 39, 181] more than fish in Jar (over a 600 sec trial), and 114 sec [CI 53, 175] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
++ Time. Fish rest more time in the afternoon. In line with the PCA and the results of Swimming.
+
+The repeatability is OK 0.37
+
+## Diagnosis
+
+```{r}
+lm_diagnosis(mResting)
+```
+
+The model seems good.
+
+## Up and down 
+
+```{r}
+dataUpDown %>% filter(Resting!=0) %>% 
+ggplot(.,aes(y = Resting, x = Tank, color = Up.Down)) +
+  geom_jitter(alpha=.5, position = position_dodge(0.5))+
+  stat_summary(fun = "mean", geom = "point", size = 4, position = position_dodge(0.5))
+```
+
+Irrespective of the tanks, the fish rested more time on the lower half of the tank than the upper half. This lower/upper difference in resting time was more or less pronounced depending on the tank.
+
+## Resting place
+
+Just a plot with the amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials. 
+
+> Problem ->  Resting on plants in Barren and Jar??
+
+```{r}
+#| column: page
+#| echo: false
+data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),], 
+            c("Tank","Resting.place","Fish","Filter","Time"), 
+            c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
+            function(x) colSums(x, na.rm = TRUE)) %>% 
+  filter(Resting.place!= "N/A") %>% 
+  mutate(Resting.place = fct_drop(Resting.place),
+         Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
+palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#84B05D","#84B05D", "#6B4921","#6B4921", "#B8B8B8")
+
+tf(data_RP , grouping = c("Resting.place","Tank"), c("Resting","Swimming"), colMeans)  %>% 
+    ggplot(., aes(fill = Resting.place, y = Resting, x = Resting.place))+
+    geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
+  scale_fill_manual(values = palette_RP)+
+  facet_wrap("Tank")+
+  theme(axis.text.x = element_text(angle=45,hjust=1),
+        legend.position="none")
+
+tf(data_RP , grouping = c("Resting.place","Fish"), c("Resting","Swimming"), colMeans)  %>% 
+    ggplot(., aes(fill = Resting.place, y = Resting, x = Resting.place))+
+    geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
+  scale_fill_manual(values = palette_RP)+
+  facet_wrap("Fish")+
+  theme(axis.text.x = element_text(angle=45,hjust=1),
+        legend.position="none")
+```
+
+For the resting place, I don't really know what to do and in fact what would be interesting to analyse. Fish are already shifting their resting places between tanks just because they have access to new resting places (filter, plants).
+
+It might be just interesting to say that fish use different places to rest, not only one type. It is particularly visible in Large where fish use all types of resting places. 
+
+:::
+
+# Foraging
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Foraging)
+table(data$Foraging==0)
+descdist(data$Foraging, boot = 1000, print = FALSE)
+```
+
+The data are clearly not following a normal distribution. It seems that they could possibly follow a beta distribution but I thought beta distributions were when the variable is between 0 and 1. I decided therefore to analyse Foraging in binary: 1 if fish spent time foraging during this trial, 0 otherwise.
+
+## Plot 
+
+The plots are in count of trials. Green represents trials in which the fish foraged, gray in which the fish did not forage. 
+
+```{r}
+#| warning: false
+plot_var_binary(data, "Foraging.bin")
+plot_var_binary(data, "Foraging.bin") + facet_wrap(~Fish)
+```
+
+## Generalised linear model 
+
+```{r}
+#| column: page
+mForaging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+Anova(mForaging)
+
+calc_contrasts_bin(mForaging)
+# example of differences between Jar and Large
+1/0.08
+## Upper CI
+1/0.014
+## Lower CI
+1/0.437
+```
+
+Effect of Tank. 
+
+As a reminder, an odds.ratio < 1 between tank X vs tank Y means the probability of foraging during a trial in tank X is smaller that the probability of foraging during a trial in tank Y. An odd ratio for instance of 0.2 means that a fish is (1 / 0.2) = five times more likely to forage during a trial in tank Y than in Tank X. If we imagine 5 trials, fish will forage on average during 1 trial out of 5 in Tank X whereas fish will forage on average during 5 trials out of 5 in Tank Y. 
+
++ Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 13 times [CI 2, 71] more likely to forage during a trial than fish in Jar, 25 times [CI 4, 166] than fish in Small, and 4 times [CI 1, 13] than fish in Medium. In addition, fish were 15 times [CI 3, 63] more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium.
+
+## Diagnosis 
+
+```{r}
+mForaging_res <- simulateResiduals(mForaging)
+plot(mForaging_res)
+plotResiduals(mForaging_res, form = data$Tank)
+plotResiduals(mForaging_res, form = data$Time)
+plotResiduals(mForaging_res, form = data$Filter)
+```
+
+The model seems good.
+
+:::
+
+# Stereotypic swimming
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Stereotypic.swimming)
+table(data$Stereotypic.swimming==0)
+descdist(data$Stereotypic.swimming, boot = 1000, print = FALSE)
+```
+
+Idem Foraging. Analysis as binary variable if the fish performs stereotypic swimming during a trial or not. 
+
+## Plot 
+
+```{r}
+#| warning: false
+plot_var_binary(data, "SS.bin")
+plot_var_binary(data, "SS.bin") + facet_wrap(~Fish)
+```
+
+Huge variability between fish as always. Some fish never performed stereotypic swimming while some in all tanks. 
+
+## Generalised linear model 
+
+```{r}
+#| column: page
+mSS <- glmmTMB(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+Anova(mSS)
+
+calc_contrasts_bin(mSS)
+```
+
+Effect of Tank. 
+
++ Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Fish in Small were 33 times [CI 4, 333] more likely to perform stereotypic swimming during a trial than fish in Jar.
+
+## Diagnosis
+
+```{r}
+mSS_res <- simulateResiduals(mSS)
+plot(mSS_res)
+plotResiduals(mSS_res, form = data$Tank)
+plotResiduals(mSS_res, form = data$Time)
+plotResiduals(mSS_res, form = data$Filter)
+# Problem with Filter, I retried the model without Filter
+mSS2 <- glmmTMB(SS.bin ~ Tank + Time + (1|Fish), data = data, family =binomial)
+plot(simulateResiduals(mSS2))
+```
+
+It is expected to have a problem with filter as there are more than twice more trials without filter than with filter. No problem when removing Filter from the model. The model seems good.
+
+## Stereotypic types
+
+Just a plot with the type of stereotypic swimming depending on the tank. To stick with the analysis, it is a count (count = 1 if the fish performs a certain type of stereotypic swimming during a trial). 
+
+```{r}
+#| column: page
+#| echo: false
+data_SST <- tf(master[master$Stereotypic.swimming !=0 & !is.na(master$Stereotypic.swimming),], 
+            c("Tank","Stereotypic.swimming.type","Fish","Filter","Time"), 
+            c("Stereotypic.swimming","Swimming"), # I have to specify two columns otherwise my function tf is not working
+            function(x) colSums(x, na.rm = TRUE))
+
+ggplot(data_SST, aes(fill = Stereotypic.swimming.type, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    theme(legend.position="bottom")+
+    ylab("Count of trials")
+
+# Remove Group 1 and Group 2
+data_SST %>% filter(Stereotypic.swimming.type!= "Group 1",
+                Stereotypic.swimming.type!= "Group 2") %>% 
+ggplot(., aes(fill = Stereotypic.swimming.type, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    theme(legend.position="bottom")+
+    ylab("Count of trials")
+```
+
+Problem in the data: what is "Group1" and "Group2"? Check the data. 
+
+Similarly with the types of Interaction with Surface, I suggest grouping different types of stereotypic swimming together to make it clearer.
+
+It seems that there are not differences between tanks. Just circles seem specific to larger tanks (Medium/Large/Barren).
+
+I did not plot the place where the stereotypic swimming happens. Tell me if you need it. 
+
+## Stereotypic Swimming repetitions
+
+```{r}
+#| column: page
+#| echo: false
+data_SST2 <- tf(master[master$Stereotypic.swimming !=0 & !is.na(master$Stereotypic.swimming),], 
+            c("Tank","Stereotypic.swimming.type","Fish","Filter","Time"), 
+            c("Stereotypic.swimming.number.of.repititions","Swimming"), # I have to specify two columns otherwise my function tf is not working
+            function(x) colSums(x, na.rm = TRUE))
+
+hist(data_SST2$Stereotypic.swimming.number.of.repititions)
+
+data_SST2 %>%
+  mutate(Nb.rep = Stereotypic.swimming.number.of.repititions) %>% 
+  dplyr::select(Tank, Fish, Time, Stereotypic.swimming.type, Nb.rep) %>% 
+  arrange(Tank, Fish, Time)
+```
+
+I don't think there are enough repetitions to really say something about the number of repetitions. The number of repetitions seems pretty unique to a fish in a certain tank. I don't see a pattern depending on the tank. The interesting thing is that the stereotypic swimming seemed consistent in a tank for a fish (most or all trials of that day with stereotypic swimming). I don't know if it is possible to calculate the repeatability of a binomial glm, but it would be interesting. 
+
+:::
+
+# Hovering
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Hovering)
+table(data$Hovering==0)
+descdist(data$Hovering, boot = 1000, print = FALSE)
+quantile(data$Hovering)
+hist1(data$Hovering[data$Hovering!=0])
+```
+
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. Even after removing the zeros, the distribution does not look like normal. Unless having a better idea, Hovering will be analysed as a binary variable. 
+
+## Plot 
+
+```{r}
+#| warning: false
+plot_var_binary(data, "Hovering.bin")
+plot_var_binary(data, "Hovering.bin") + facet_wrap(~Fish)
+```
+
+## Generalised linear model 
+
+```{r}
+#| column: page
+mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+Anova(mHovering)
+emmeans(mHovering, ~ Time, type = "response")
+emmeans(mHovering, ~ Filter, type = "response")
+```
+
+No effect of Tank, only an effect of Time and filter
+
++ Time. Fish were less likely to hover in the afternoon.
++ Filter. Fish were less likely to hover with a filter in their tank.
+
+## Diagnosis
+
+```{r}
+mHovering_res <- simulateResiduals(mHovering)
+plot(mHovering_res)
+```
+
+The model seems good.
+
+## Hovering place
+
+Just a plot with where the fish hovers at the different places depending on the tank. To stick with the analysis, it is a count (count = 1 if the fish hovers in this place during a trial). 
+
+```{r}
+#| column: page
+#| echo: false
+data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
+            c("Tank","Hovering.place","Fish","Filter","Time"), 
+            c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
+            function(x) colSums(x, na.rm = TRUE)) %>% 
+  mutate(Hovering.place = fct_drop(Hovering.place),
+         Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
+
+palette_HP <- c("#E3C9B8", "#89D7F5", "#AEE3B9","#AEE3B9","#6B4921", "#B8B8B8")
+
+ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    scale_fill_manual(values = palette_HP)+
+    ylab("Count of trials")
+
+ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    scale_fill_manual(values = palette_HP)+
+    ylab("Count of trials")+
+  facet_wrap("Fish")+
+  theme(axis.text.x = element_text(angle=45,hjust=1),
+        legend.position="bottom")
+```
+
+Fish used different places for hovering in all tanks.
+
+:::
+
+# Interaction with Surface
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Interation.with.surface)
+table(data$Interation.with.surface==0)
+```
+
+Idem analysis binary generalised linear models.
+
+## Plot 
+
+```{r}
+#| warning: false
+plot_var_binary(data, "Interacting.bin")
+plot_var_binary(data, "Interacting.bin") + facet_wrap(~Fish)
+```
+
+## Generalised linear model 
+
+```{r}
+#| column: page
+mInteracting <- glmmTMB(Interacting.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+Anova(mInteracting)
+
+calc_contrasts_bin(mInteracting)
+```
+
+Effect of Tank.
+
++ Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). Fish in Jar were XX times [CI XX, XX] more likely to interact with the surface during a trial than fish in Large, and Fish in Medium were XX times [CI XX, XX] then fish in Large (do the same calculation than Foraging or Stereotypic Swimming). In addition, fish were XX times [CI XX, XX] more likely to interact with a surface during a trial in Barren than in Large. 
+
+## Diagnosis
+
+```{r}
+mInteracting_res <- simulateResiduals(mInteracting)
+plot(mInteracting_res)
+plotResiduals(mInteracting_res, form = data$Tank)
+```
+
+The model seems good.
+
+## Interacting types
+
+Just a plot with the type of interaction depending on the tank. To stick with the analysis, it is a count (count = 1 if the fish performs a certain type of interaction with surface during a trial). 
+
+```{r}
+#| column: page
+#| echo: false
+data_IT <- tf(master[master$Interation.with.surface !=0 & !is.na(master$Interation.with.surface),], 
+            c("Tank","Interaction.with.surface.type","Fish","Filter","Time"), 
+            c("Interation.with.surface","Swimming"), # I have to specify two columns otherwise my function tf is not working
+            function(x) colSums(x, na.rm = TRUE))
+
+ggplot(data_IT, aes(fill = Interaction.with.surface.type, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    theme(legend.position="bottom")+
+    ylab("Count of trials")
+```
+
+Idem, it would be nice to group together certain types of interaction to make it clearer.
+
+:::
+
+# Nest.building
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Nest.building)
+table(data$Nest.building==0)
+```
+
+There are 1 trial out of 5 where there was nest building. Analysis binary generalised model.
+
+## Plot 
+
+```{r}
+#| warning: false
+plot_var_binary(data, "Nest.bin")
+plot_var_binary(data, "Nest.bin") + facet_wrap(~Fish)
+```
+
+## Generalised linear model 
+
+```{r}
+#| column: page
+mNest <- glmmTMB(Nest.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+Anova(mNest)
+
+calc_contrasts_bin(mNest)
+emmeans(mNest, ~ Filter, type = "response")
+```
+
+Effect of Tank and Filter.
++ Tank. Despite a significant effect of Tank, no contrasts were statistically significant. This is usual when you have a weakly significant fixed effect of a factor (0.01 < p-value < 0.05) which has a lot of different levels. In terms of trend, fish in Jar seemed less likely to build a nest compared to Small/Medium/Large. In addition, fish in Barren were less likely to build nest than fish in Large. 
++ Filter. Fish were more likely to build a nest without a filter in their tank.
+
+## Diagnosis
+
+```{r}
+mNest_res <- simulateResiduals(mNest)
+plot(mNest_res)
+plotResiduals(mNest_res, form = data$Tank)
+plotResiduals(mNest_res, form = data$Time)
+plotResiduals(mNest_res, form = data$Filter)
+```
+
+The model seems good.
+
+:::
+
+# Sinking/Floating
+
+I have analysed Sinking/Floating, but if it were up to me, I would give up this variable in view of the PCA. 
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Sinking.Floating)
+table(data$Sinking.Floating==0)
+```
+
+Many zeros, analysis with a binary generalised linear model. 
+
+## Plot 
+
+```{r}
+#| warning: false
+plot_var_binary(data, "SF.bin")
+plot_var_binary(data, "SF.bin") + facet_wrap(~Fish)
+```
+
+## Generalised linear model 
+
+```{r}
+#| column: page
+mSF <- glmmTMB(SF.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+Anova(mSF)
+
+calc_contrasts_bin(mSF)
+```
+
+Effect of Tank. 
+
++ Tank. Problem with the calculation of contrast because fish never sinked or floated in Large. Solution 1: don't include this behavioural type at all in the analysis as it has very little influence based on the PCA. Solution 2: include it anyway and state that the calculation of contrasts and corresponding tests were not possible. Just intepret it qualitatively with no test (Fish were more likely to perform sinking/floating in Jar, then Small and Medium were pretty similar, then Large. Fish in Barren were more likely to perform Sinking/Floating than fish in Large).
+
+## Diagnosis 
+
+```{r}
+mSF_res <- simulateResiduals(mSF)
+plot(mSF_res)
+plotResiduals(mSF_res, form = data$Tank)
+plotResiduals(mSF_res, form = data$Time)
+plotResiduals(mSF_res, form = data$Filter)
+```
+
+The model seems good.
+
+:::
+
+# Conclusion
+
+Here how I see the results section.
+
+First, I would include the PCA to show the correlations between variables and to highlight the important variables that contribute to the most of variability in behaviour
+
+Second, I would do a first big table for the results of the anova with the F-value, NumDf, DenDf and associated p-value for the fixed effects Tank, Filter and Time fixed effects. For the generalised mixed models (foraging, stereotypic swimming, etc), it is not the F-value but the Chisq, Df and p-value Foraging, Stereotypic Swimming, etc). For the linear models, I will also include in this big table the results for the random effect (Variance explained by fish, Residual variance and Repeatability). Then, I would put another table with the results of the contrasts between tanks with the contrast estimates, their confidence intervals, the associated t- or z-tests and p-values for readers to have an idea of the size of the difference between treatments. It is worth noting that the confidence intervals are large which is normal considering the number of fish.
+
+Based on the two tables, what we can say first is that there is a effect of the Tank on all behaviours, the tank is there having a big influence on the betta's behaviour. Then, tt seems that we have three groups for the Jar/Small/Medium/Large
+
++ Jar with less likely to build a nest and less likely to perform stereotypic swimming compared to the others
++ Small and Medium
++ Large with more time swimming, less time resting, more likely to forage and less likely to interact with the surface
+
+And Large and Barren are two different groups
++ Barren with less likely to build a nest
++ Large with more time swimming, more likely to forage and less likely to interact with the surface
+
+Also, I would put something about the fact that each fish behave pretty uniquely. 
+
+Tell me if you have any questions or would like to change something.  
+
+The only thing I would like to do is to make sure the order in which fish have experienced the different tanks did not have any influence.
+
+:::

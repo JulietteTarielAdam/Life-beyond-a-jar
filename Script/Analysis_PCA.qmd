@@ -1,0 +1,114 @@
+---
+title: "PCA Analysis of Naomi's data. Influence of the tank on Betta's behaviour."
+date: "`r Sys.Date()`"
+author: "Juliette Tariel-Adam"
+format: 
+   html:
+    embed-resources: true
+    self-contained-math: true
+editor_options: 
+  chunk_output_type: console
+knitr:
+  opts_chunk:
+    fig-align: center
+    out-width: "100%"
+---
+
+
+```{r}
+#| include: false
+source("Script/Load-data.R")
+source("Script/Functions/Plots.R")
+source("Script/Functions/Linear-model.R")
+library(factoextra)
+```
+
+I tried a PCA on:
+
++ scaled variables.
+  * All variables are divided by their standard deviation and have therefore the same variance / standard deviation of 1. It is the standard PCA.
+  * But the problem with PCA on scaled variables it that it cannot quantitatively interpret the differences between treatments (for instance we can't say 100 sec resting more in Large than Barren). It stays a qualitative analysis (for instance more time spent resting in Large than Barren). A solution is to then give some numbers by calculating them on raw behavioural types. 
++ non-scaled variables. All behavioural variables have the same unit, which means we can do a PCA without scaling the variables. The variables with the higher variance will contribute more to the PCA. 
+  * PCA using non-scaled variables can quantitatively interpret the differences.
+  * But it gives more importance to behavioural variables that have the more variance. And I don't see why we should give more importance to certain variables or not. A difference of 10 sec in stereotypic swimming might be as relevant as a difference of 50 s swimming.
+
+So we decide to do PCA using scaled variables because of this last point: we don't want to give more importance to behaviours with the most variance.(And the circle of correlations looks shit with non-scaled variables, but it is not an argument haha)
+
+Also, I was concerned of running PCA on repeated measures, but apparently it is not a big deal.
+
+::: {.panel-tabset}
+
+# Scaled variables
+
+```{r}
+pcaS <- PCA(data[,beh.cols], graph = FALSE, scale.unit = TRUE)
+pcaS$eig
+fviz_eig(pcaS, addlabels = TRUE)
+```
+
+Rules to keep an component:
+
++ eigen value > 1
++ Cumulative percentage of variance > 95% 
++ component before the drop
+
+Depending on the rules, we should keep between 4 (eigen value > 1) or 7 components (cumulative percentage of variance > 95%). Keeping 7 components is pointless! I keep only 4 components, explaining 70$ of total variance. 
+
+```{r}
+pcaS <- PCA(data[,beh.cols], ncp=4,graph = FALSE, scale.unit = TRUE)
+plot(pcaS, choix = "var", axes = c(1,2)) 
+plot(pcaS, choix = "var", axes = c(3,4))
+
+# how well each variable correlates with and contributes to the variation explained by each principal component
+round(pcaS$var$cos2,1)
+# extent to which each variable contributes to the total variance explained by the first 4 components
+rowSums(pcaS$var$contrib)
+```
+
++ 1st axis: Swimming, Foraging vs Resting
++ 2nd axis: Hovering vs Stereotypic swimming
++ 3rd axis: Mostly Nest.building vs Foraging
++ 4th axis: almost all variables, difficult to interpret
+
+As the 4th axis is difficult to interpret, we could keep 3 easy-interpretable components to explain 57% of the variance. 57% of the variance is not a lot... I thus decided to study behavioural types individually, but tell me if you prefer analyse the PCA components. The advantage of studying behavioural types individually is also to be able to interpret quantitatively the differences between treatments (like said before, 100 sec difference between tank X and tank Y).
+
+Interaction with surface and Sinking.Floating are not very useful for the first 4 components, so not useful to explain the variability between trials (and this even though they are scaled = contribute to the PCA to the same extent that variables with higher initial variance).
+
+```{r}
+fviz_pca_biplot(pcaS, geom.ind = "point", col.ind = data$Tank, col.var="black",
+							addEllipses = TRUE, legend.title = "Tank", palette = viridis(5))
+fviz_pca_biplot(pcaS, geom.ind = "point", col.ind = data$Fish, col.var="black",
+							addEllipses = TRUE, legend.title = "Fish", palette = viridis(13))
+```
+
+No clear distinction between the different tanks or fish. Common in behaviour ecology to not have clear groups.
+
+# Non scaled variables
+
+Resting and Swimming have the highest variance (see below) and they will therefore contribute more to the PCA using non-scaled variables. Sinking.Floating, Foraging and Hovering have the lowest variances.
+
+```{r}
+apply(data[,beh.cols], 2, var) # variance of each variable
+
+pcaNS <- PCA(data[,beh.cols], graph = FALSE, scale.unit = FALSE)
+pcaNS$eig
+fviz_eig(pcaNS, addlabels = TRUE)
+# if we keep 4 variables
+pcaNS <- PCA(data[,beh.cols], ncp=4,graph = FALSE, scale.unit = FALSE)
+plot(pcaNS, choix = "var", axes = c(1,2))
+plot(pcaNS, choix = "var", axes = c(3,4))
+
+round(pcaNS$var$cos2,1)
+rowSums(pcaNS$var$contrib)
+```
+
+Using the cumulative percentage of variance's  rule, 4 variables will be enough. 3 axis might be good enough as the 4th axis is bringing only 6% of variance.
+
++ 1st axis: Resting vs Swimming, Stereotypic.swimming
++ 2nd axis: Swimming vs Stereotypic swimming 
++ 3rd axis: Mostly Nest.building 
++ 4th axis: Mostly Hovering
+
+Again Sinking.Floating is not explaining a lot of variance. Hovering is important because even if its variance is low, it is explaining some variance in the data. 
+
+:::
