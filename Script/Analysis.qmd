@@ -89,7 +89,7 @@ In my opinion, Filter needs to be included in all models as a control variable.
 
 ## Order of trials
 
-Visual inspection of any trend in the order of trials, like for instance if there were more swimming during the 2nd trial whatever the tank was.
+Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Is there an effect of the order of treatments? For instance, is there the same average swimming in Large whether Large was the 2nd or the 3rd treatments fish underwent? Visual investigation using the order of treatments.
 
 ```{r}
 #| echo: false
@@ -103,7 +103,7 @@ data %>% mutate(Nest.bin = as.numeric(Nest.bin)-1) %>%
 plot_order(., "Nest.bin")
 ```
 
-There was no apparent trend in the order of trials (for instance, fish did not perform more swimming at the 2nd trial whatever tank they were in).
+There was no consistent trend in the order of trials (for instance, fish did not perform more swimming at the 2nd trial whatever tank they were in).
 
 # PCA
 
@@ -129,12 +129,11 @@ rowSums(pca$var$contrib)/3
 
 + The 1st PCA component was driven by Resting (cos2 = 0.8), Swimming (0.7) and Foraging (0.3). Swimming and Foraging opposite to Resting. This first component could be interpret as "activity". If a fish spent a lot of time swimming and foraging during a trial, it was very little resting. This first component explained 25% of the variance in the data (as a reminder, the data is the time spent performing the different types of behaviour). So 1 quarter of the variance is a matter of activity. Keep in mind for the rest of the analyses that these behavioural types are correlated. 
 
-
 + The 2nd PCA component was driven by Hovering (cos2 = 0.5) and Stereotypic.swimming (0.5), and a bit by Interaction with surface (0.16). Hovering and Interacting.with.Surface opposite to Stereotypic.swimming. If the fish spent a lot of time hovering (and interacting with the surface), it was very little stereotypic swimming. This is interesting in my opinion. 
 
 + The 3rd PCA component was driven mainly by Nest building (cos2 = 0.6), and a bit by Foraging (0.16), Resting (0.14) and Stereotypic Swimming (0.13). Foraging and Resting opposite to Nest building and Stereotypic Swimming. If a fish spent time foraging and resting in a trial, it was little nest building and stereotypic swimming. This makes sense, it a fish is building a nest,it is an important task and needs to be finished, so it is not scattering its time with other activities. The apparent correlation between nest building and stereotypic swimming could be due to Jar where fish in this tank rarely engaged in nest building or stereotypic swimming. 
 
-Sinking/Floating contributed almost nothing to the first three components (2%) + did not correlate strongly with any of the component. Sinking/Floating was not important to explain the variability between trials.
+Sinking/Floating contributed almost nothing to the first three components (2%) + did not correlate strongly with any of the component. Sinking/Floating was not important to explain the variability between trials. After discussion with Naomi and Culum, we agree to not analyse this behavioural type.
 
 # Swimming
 
@@ -660,58 +659,6 @@ plot(mNest_res)
 plotResiduals(mNest_res, form = data$Tank)
 plotResiduals(mNest_res, form = data$Time)
 plotResiduals(mNest_res, form = data$Filter)
-```
-
-The model seems good.
-
-:::
-
-# Sinking/Floating
-
-I have analysed Sinking/Floating, but if it were up to me, I would give up this variable in view of the PCA. 
-
-::: {.panel-tabset}
-
-## Distribution 
-
-```{r}
-hist1(data$Sinking.Floating)
-table(data$Sinking.Floating==0)
-```
-
-Many zeros, analysis with a binary generalised linear model. 
-
-## Plot 
-
-```{r}
-#| warning: false
-plot_var_binary(data, "SF.bin")
-plot_var_binary(data, "SF.bin") + facet_wrap(~Fish)
-```
-
-## Generalised linear model 
-
-```{r}
-#| column: page
-mSF <- glmmTMB(SF.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
-
-Anova(mSF)
-
-calc_contrasts_bin(mSF)
-```
-
-Effect of Tank. 
-
-+ Tank. Problem with the calculation of contrast because fish never sinked or floated in Large. Solution 1: don't include this behavioural type at all in the analysis as it has very little influence based on the PCA. Solution 2: include it anyway and state that the calculation of contrasts and corresponding tests were not possible. Just intepret it qualitatively with no test (Fish were more likely to perform sinking/floating in Jar, then Small and Medium were pretty similar, then Large. Fish in Barren were more likely to perform Sinking/Floating than fish in Large).
-
-## Diagnosis 
-
-```{r}
-mSF_res <- simulateResiduals(mSF)
-plot(mSF_res)
-plotResiduals(mSF_res, form = data$Tank)
-plotResiduals(mSF_res, form = data$Time)
-plotResiduals(mSF_res, form = data$Filter)
 ```
 
 The model seems good.
