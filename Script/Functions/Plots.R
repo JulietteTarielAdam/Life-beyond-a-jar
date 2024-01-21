@@ -62,6 +62,17 @@ plot_var_binary <- function(data, variable){
     ylab("Percentage of trials")
 }
 
+plot_var_binary_fish <- function(data, variable){
+  data2 <- aggregate(data[,variable], 
+                     list(data[,"Tank"], data[,"Fish"]), 
+                     function(x) sum(as.integer(x)-1))%>% 
+    setNames(.,c("Tank", "Fish", variable))
+  ggplot(data2, aes_string(y= variable,x = "Tank"))+
+    geom_bar(stat= "identity",fill=grey(0.8), color = "black")+
+    ylab("Percentage of trials")+
+    facet_wrap(~Fish)
+}
+
 # Plot order of tanks
 plot_order <- function(data, variable){
   means_tank <- aggregate(data[,variable], list(data[,"Tank"],data[,"Order"]), mean) %>% 
