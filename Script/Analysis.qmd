@@ -225,12 +225,13 @@ plot_var_fish(data, "Resting")
 mResting <- lmer(Resting ~ Tank + Time + Filter + (1|Fish), data = data)
 lm_results(mResting)
 calc_contrasts(mResting)
+emmeans(mResting, ~ Time)
 ```
 
 Effect of Tank and Time.
 
 + Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 110 sec [CI 39, 181] more than fish in Jar (over a 600 sec trial), and 114 sec [CI 53, 175] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
-+ Time. Fish rest more time in the afternoon. In line with the PCA and the results of Swimming.
++ Time. Fish rest less time in the morning, especially at 7 am. In line with the PCA and the results of Swimming.
 
 The repeatability is OK 0.37
 
@@ -241,17 +242,6 @@ lm_diagnosis(mResting)
 ```
 
 The model seems good.
-
-## Up and down 
-
-```{r}
-dataUpDown %>% filter(Resting!=0) %>% 
-ggplot(.,aes(y = Resting, x = Tank, color = Up.Down)) +
-  geom_jitter(alpha=.5, position = position_dodge(0.5))+
-  stat_summary(fun = "mean", geom = "point", size = 4, position = position_dodge(0.5))
-```
-
-Irrespective of the tanks, the fish rested more time on the lower half of the tank than the upper half. This lower/upper difference in resting time was more or less pronounced depending on the tank.
 
 ## Resting place
 
@@ -678,6 +668,16 @@ ggplot(.,aes(y = Swimming, x = Tank, color = Up.Down)) +
 
 It seems that the tank has an influence on whether fish prefer swimming on the upper half or lower half of the tank.
 
+## Up and down 
+
+```{r}
+dataUpDown %>% filter(Resting!=0) %>% 
+ggplot(.,aes(y = Resting, x = Tank, color = Up.Down)) +
+  geom_jitter(alpha=.5, position = position_dodge(0.5))+
+  stat_summary(fun = "mean", geom = "point", size = 4, position = position_dodge(0.5))
+```
+
+Irrespective of the tanks, the fish rested more time on the lower half of the tank than the upper half. This lower/upper difference in resting time was more or less pronounced depending on the tank.
 
 # Conclusion
 
