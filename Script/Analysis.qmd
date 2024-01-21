@@ -164,15 +164,29 @@ plot_var_fish2(data, "Swimming")
 mSwimming <- lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = data)
 lm_results(mSwimming)
 calc_contrasts(mSwimming)
+emmeans(mSwimming, ~ Time) # estimated means of time spent swimming depending on the time of the day 
 ```
 
 Effect of Tank, Time and Filter! 
 
 + Tank. Large swam significantly more time than Jar, Small and Medium. Fish in fish in Large swan 93 sec [CI 45, 140] more than Jar (over a 600 sec trial), 79 sec [CI 32, 126] more than Small, and 81 sec [CI 39, 122] more than Medium. In addition,  fish in Large swam significantly more time (58 sec [CI 16, 101]) than fish in Barren. 
-+ Time. Fish swim less in the afternoon.
++ Time. Fish swim more in the morning than in the afternoon, especially at 7 am.
 + Filter. Fish swim more with a filter in their tank.
 
+## Between-fish differences
+
 Repeatability is quite low (0.2)
+
+```{r}
+rand(mSwimming) 
+
+mSwimming0 <- lm(Swimming ~ Tank + Time + Filter, data = data)
+anova(mSwimming, mSwimming0)
+
+rd <- rpt(julian_departure ~ factor(year)+sex+departure_period+(1|tag_id), grname = "tag_id", data = data, datatype = "Gaussian", nboot = 0, npermut = 0)
+print(rd)
+```
+
 
 ## Diagnosis
 
@@ -181,18 +195,6 @@ lm_diagnosis(mSwimming)
 ```
 
 The model seems good.
-
-## Up and down 
-
-```{r}
-dataUpDown %>% filter(Swimming!=0) %>% 
-ggplot(.,aes(y = Swimming, x = Tank, color = Up.Down)) +
-  geom_jitter(alpha=.5, position = position_dodge(0.5))+
-  stat_summary(fun = "mean", geom = "point", size = 4, position = position_dodge(0.5))
-```
-
-It seems that the tank has an influence on whether fish prefer swimming on the upper half or lower half of the tank.
-
 :::
 
 # Resting
@@ -664,6 +666,18 @@ plotResiduals(mNest_res, form = data$Filter)
 The model seems good.
 
 :::
+
+# Up and down 
+
+```{r}
+dataUpDown %>% filter(Swimming!=0) %>% 
+ggplot(.,aes(y = Swimming, x = Tank, color = Up.Down)) +
+  geom_jitter(alpha=.5, position = position_dodge(0.5))+
+  stat_summary(fun = "mean", geom = "point", size = 4, position = position_dodge(0.5))
+```
+
+It seems that the tank has an influence on whether fish prefer swimming on the upper half or lower half of the tank.
+
 
 # Conclusion
 
