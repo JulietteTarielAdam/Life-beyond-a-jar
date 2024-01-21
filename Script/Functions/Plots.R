@@ -21,9 +21,8 @@ plot_var <- function(data, variable){
     setNames(.,c("Tank", variable))
   
   ggplot(data, aes_string(y = variable, x = "Tank")) +
-    geom_jitter(alpha = .8, width = 0.05, height=0)+
-    geom_point(data = means_tank,colour = "red", size = 4, alpha = .5)+
-    geom_line(data = means_tank, aes(group=1), colour = "red", alpha = .5) 
+    geom_jitter(alpha = .5, width = 0.025, height=0, color = grey(0.5))+
+    geom_point(data = means_tank,colour = "red", size = 4, alpha = .5)
 }
 
 # plot one variable at a time for each fish
@@ -54,11 +53,13 @@ plot_var_fish2 <- function(data, variable){
 
 # Plot binary
 plot_var_binary <- function(data, variable){
-  ggplot(data, aes_string(fill = variable, x = "Tank"))+
-    geom_bar(stat= "count",color=grey(0.4))+
-    scale_fill_manual(values = c( "gray", "springgreen3"))+
-    ylab("Count of trials")+
-    theme(legend.position = "bottom")
+  data2 <- aggregate(data[,variable], 
+                     list(data[,"Tank"]), 
+                     function(x) sum(as.integer(x)-1))%>% 
+    setNames(.,c("Tank", variable))
+  ggplot(data2, aes_string(x = "Tank"))+
+    geom_bar(color=grey(0.4))+
+    ylab("Percentage of trials where foraging occured")
 }
 
 # Plot order of tanks
