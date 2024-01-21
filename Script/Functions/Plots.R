@@ -57,9 +57,9 @@ plot_var_binary <- function(data, variable){
                      list(data[,"Tank"]), 
                      function(x) sum(as.integer(x)-1))%>% 
     setNames(.,c("Tank", variable))
-  ggplot(data2, aes_string(x = "Tank"))+
-    geom_bar(color=grey(0.4))+
-    ylab("Percentage of trials where foraging occured")
+  ggplot(data2, aes_string(y= variable,x = "Tank"))+
+    geom_bar(stat= "identity",fill=grey(0.8), color = "black")+
+    ylab("Percentage of trials")
 }
 
 # Plot order of tanks
