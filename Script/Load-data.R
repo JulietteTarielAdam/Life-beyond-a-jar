@@ -3,6 +3,7 @@
 library(tidyverse) 
 ## for plots
 library(ggplot2) 
+library(ggpubr) # assemble multiple plots
 theme_set(theme_classic())
 library(viridis)
 library(ggforce) # facet_wrap_paginate
@@ -23,7 +24,7 @@ master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, s
 
 # change order or name of factor levels
 master$Tank <- factor(master$Tank, levels = c("Jar", "Small", "Medium", "Large", "Barren")) 
-master$Time <- factor(master$Time, levels = c("7:00 am", "10:00 am", "2:00 pm", "6:00 pm"))
+master$Time <- factor(master$Time, levels = c("7:00 AM", "10:00 AM", "2:00 PM", "6:00 PM"))
 levels(master$Filter)
 levels(master$Filter) <- c("No-filter", "Filter")
 
@@ -39,9 +40,9 @@ beh.cols.full <- c(beh.cols, "Out.of.view")
 # the "beh.cols" attribute indicates which behavioural types to consider
 ## transforming function
 tf <- function(data, grouping, beh.cols, fct){
-  list <- split(data, data[,grouping]) # split the data.frame into a list where each list item is a sub data.frame splitted by the grouping factors
+  list <- group_split(data, data[,grouping]) # split the data.frame into a list where each list item is a sub data.frame splitted by the grouping factors
   list2 <- list[sapply(list, nrow)!=0] # filter empty list items
-  result <- lapply(list2,
+  result <- lapply(list2, # apply to each sub dataframe the function
                    function(sub.data){
                      temp <- fct(sub.data[, beh.cols])
                      if(length(grouping)==1){
@@ -64,8 +65,12 @@ data <- tf(master, grouping, beh.cols.full, fct)
 
 ## main file with up and down
 grouping <- c("Fish","Tank","Order","Time", "Up.Down", "Filter")
-dataUpDown <- tf(master, grouping, beh.cols.full, fct)
-
+dataUpDown <- tf(master, grouping, beh.cols.full, fct) 
+dataUpDown$Total <- rowSums(dataUpDown[,beh.cols.full])
+dataUpDown <- dataUpDown %>% 
+ dplyr::select(-beh.cols.full) %>% 
+ pivot_wider(values_from = Total, names_from = Up.Down) %>% 
+ mutate(perc.up = up / (up + down))
 
 # PCA
 pca <- PCA(data[,beh.cols], graph = FALSE, ncp=3, scale.unit = TRUE)

@@ -6,5 +6,6 @@ Project explanation
 Data
 /.quarto/
 Script 2023-12
-/Manuscript/Guide what to report in the Results_files
-/Manuscript/Guide what to report in the Results.html
+Manuscript
+Plots
+.gitignore

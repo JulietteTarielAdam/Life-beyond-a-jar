@@ -15,22 +15,25 @@ knitr:
 
 ```{r}
 #| include: false
+# This code allows to run the scripts that load the data and that contains the functions to plot and do the linear models
 source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
 ```
 
-Remember that we decided to compare Jar/Small/Medium/Large among each other, and Large/Barren between each other, because Jar/Small/Medium and Barren differ by two factors: enrichment and size. 
+Jar/Small/Medium/Large are compared among each other, and Large/Barren between each other. Barren is not compared to Jar/Small/Medium because they differ by two factors: enrichment and size. 
 
-You fill find below the first row of tabs to click on (PCA, Swimming, etc) and for most of these tabs, a second row of tab to click on (Distribution, Plot, etc).
+On the html knitted output of this script, you fill find below a first row of tabs to click on (PCA, Swimming, etc) and for most of these tabs, a second row of tabs to click on (Distribution, Plot, etc).
 
 ::: {.panel-tabset}
 
 # Data description
 
-9 behaviours scored: Resting, Swimming, Hovering, Sinking/Floating, Stereotypic swimming, Nest building, Foraging, Interation with surface, Out of view. Out.of.view is a bit special because it is not a behaviour. During a 10 min trial = 600 sec, the fish's behaviour was assigned to one of the 9 behaviours, meaning that the behaviours are mutually exclusive (a fish can't be scored as nest building and interacting with the surface at the same time).
+After staying 3-7 days in a tank, the behaviour of all fish were scored by four 10-min trials in this tank. All trials occurred the same day at 4 different times (7 am, 10 am, 2 pm, 6 pm). During the 10 min trial = 600 sec, the fish's behaviour was assigned to one of the 9 behaviours, meaning that the behaviours are mutually exclusive (a fish can't be scored as nest building and interacting with the surface at the same time): Resting, Swimming, Hovering, Sinking/Floating, Stereotypic swimming, Nest building, Foraging, Interation with surface, Out of view.
 
-After staying 3-7 days in a tank, the behaviour of all fish were scored by 4 trials in this tank. All trials occurred the same day at 4 different times (7 am, 10 am, 2 pm, 6 pm). 
+Out.of.view is a bit special because it is not a behaviour and was not analyse.
+
+Sinking/Floating was not analyse (see explanation in the conclusion of the PCA section).
 
 ```{r}
 summary(data)
@@ -52,7 +55,7 @@ sort(data$total)
 
 The sum of all behaviours should be 600 sec, it varies between `r min(data$total)` and `r max(data$total)`, but it is alright. 
 
-I inspected the data for data entry errors (sum of scored behaviours too low/high, column shifted, typos, inconsistent nb of observations per fish/time/tank...) and Naomi corrected them. 
+The data has been inspected and corrected for data entry errors (sum of scored behaviours too low/high, column shifted, typos, inconsistent nb of observations per fish/time/tank...).
 
 ## Plots
 
@@ -62,6 +65,7 @@ The mean value over multiple trials is plotted to only have one value per treatm
 #| column: page
 #| echo: false
 #| warning: false
+# the plot1 function is in the script "Plots.R"
 plot1("Tank")
 
 plot1("Tank","Fish") +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 1) + ggtitle("Per fish") 
@@ -85,7 +89,7 @@ table(data$Fish, data$Filter)/4
 plot1("Filter", "Tank") +  facet_wrap(~Tank)
 ```
 
-In my opinion, Filter needs to be included in all models as a control variable.
+Filter needs to be included in all models as a control variable.
 
 ## Order of trials
 
@@ -93,6 +97,7 @@ Fish underwent different order of treatments: Some fish started with Large, then
 
 ```{r}
 #| echo: false
+# the plot_order function is in the script "Plots.R"
 plot_order(data, "Swimming")
 plot_order(data, "Resting")
 data %>% mutate(Foraging.bin = as.numeric(Foraging.bin)-1) %>% 
@@ -113,11 +118,16 @@ We run a PCA in order to:
 + Determine which behavioural types are important to explain the variability between trials
 + See correlations between behavioural types
 
-The PCA did not help reduce the number of variables to analyse (see Analysis_PCA.html for more explanation) so I analysed the behavioural types separately + it allows to interpret differences between tanks quantitatively. I still plotted below the first 3 components, which explained 57% of variance in the data, to show the important variables and the correlations between variables. 
+The PCA did not help reduce the number of variables to analyse (see Analysis_PCA.html for more explanation) so the behavioural types were analysed separately with linear models. This allows to interpret differences between tanks quantitatively compared to the PCA.
+
+Even if we did not use PCA for further analysis, the first 3 components are plotted below, which explained 57% of variance in the data, to show the important variables and the correlations between variables. 
 
 ```{r}
-plot(pca, choix = "var", axes = c(1,2)) 
-plot(pca, choix = "var", axes = c(1,3))
+(plot1 <- plot(pca, choix = "var") + labs(title = NULL))
+(plot2 <- plot(pca, choix = "var", axes = c(1,3)) + labs(title = NULL))
+# Export plots
+arrange <- ggarrange(plot1, plot2, labels =LETTERS[1:2])
+ggsave(arrange, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
 ```
 
 ```{r}
@@ -129,7 +139,7 @@ rowSums(pca$var$contrib)/3
 
 + The 1st PCA component was driven by Resting (cos2 = 0.8), Swimming (0.7) and Foraging (0.3). Swimming and Foraging opposite to Resting. This first component could be interpret as "activity". If a fish spent a lot of time swimming and foraging during a trial, it was very little resting. This first component explained 25% of the variance in the data (as a reminder, the data is the time spent performing the different types of behaviour). So 1 quarter of the variance is a matter of activity. Keep in mind for the rest of the analyses that these behavioural types are correlated. 
 
-+ The 2nd PCA component was driven by Hovering (cos2 = 0.5) and Stereotypic.swimming (0.5), and a bit by Interaction with surface (0.16). Hovering and Interacting.with.Surface opposite to Stereotypic.swimming. If the fish spent a lot of time hovering (and interacting with the surface), it was very little stereotypic swimming. This is interesting in my opinion. 
++ The 2nd PCA component was driven by Hovering (cos2 = 0.5) and Stereotypic.swimming (0.5), and a bit by Interaction with surface (0.16). Hovering and Interacting.with.Surface opposite to Stereotypic.swimming. If the fish spent a lot of time hovering (and interacting with the surface), it was very little stereotypic swimming. This is interesting in my opinion.
 
 + The 3rd PCA component was driven mainly by Nest building (cos2 = 0.6), and a bit by Foraging (0.16), Resting (0.14) and Stereotypic Swimming (0.13). Foraging and Resting opposite to Nest building and Stereotypic Swimming. If a fish spent time foraging and resting in a trial, it was little nest building and stereotypic swimming. This makes sense, it a fish is building a nest,it is an important task and needs to be finished, so it is not scattering its time with other activities. The apparent correlation between nest building and stereotypic swimming could be due to Jar where fish in this tank rarely engaged in nest building or stereotypic swimming. 
 
@@ -154,7 +164,7 @@ The second plot is to see the trend by fish and by tank. Thick red line is the o
 ```{r}
 #| warning: false
 plot_var(data, "Swimming")
-plot_var_fish2(data, "Swimming")
+plot_var_fish(data, "Swimming")
 ```
 
 ## Linear model 
@@ -677,11 +687,14 @@ The model seems good.
 
 # Up and down 
 
+Research question: did fish use differently use the upper part or lower part of their tank depending of the tank type?
+
 ```{r}
-dataUpDown %>% filter(Swimming!=0) %>% 
-ggplot(.,aes(y = Swimming, x = Tank, color = Up.Down)) +
-  geom_jitter(alpha=.5, position = position_dodge(0.5))+
-  stat_summary(fun = "mean", geom = "point", size = 4, position = position_dodge(0.5))
+dataUpDown %>% 
+ggplot(.,aes(y = perc.up, x = Tank)) +
+  geom_jitter(alpha=.5, width=0.05)+
+  stat_summary(fun = "mean", geom = "point", size = 4)+
+  ylab("Percentage of time in the upper part of the tank")
 ```
 
 It seems that the tank has an influence on whether fish prefer swimming on the upper half or lower half of the tank.
