@@ -1,16 +1,25 @@
+# print the results of the fixed effects 
 lm_results <- function(model){
   print("Anova")
   anova <- anova(model, ddf = "Kenward-Roger", type = 2)
   print(anova)
   print("Fixed effect estimates")
   print(summary(model)$coefficients)
-  random <- as.data.frame(summary(model)$varcor) 
-  print("Random effect estimates")
-  print(data.frame(Effect = random$grp,
-            Variance = random$vcov,
-            Repeatability = c(round(random$vcov[1]/(random$vcov[1]+random$vcov[2]),2),NA)))
 }
 
+# print the results of the random effect
+lm_results_random <- function(model){
+  print("Random effect test")
+  print(rand(model))
+  print("Random effect estimates")
+  random <- as.data.frame(summary(model)$varcor)
+  print(data.frame(Effect = random$grp,
+                 Variance = random$vcov))
+  print("Repeatability")
+  print(rpt(formula(model), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 0))
+  } 
+
+# provide diagnostic assumptions of linear models
 lm_diagnosis <- function(model){
   print("check linearity and constant variance over fitted values")
   check_model(model, check="linearity")
@@ -25,6 +34,7 @@ lm_diagnosis <- function(model){
   check_model(model, check="pp_check")
 }
 
+# Calculate the contrasts between tanks
 calc_contrasts <- function(model){ 
 temp <- emmeans(model, ~ Tank) %>% 
   contrast(.,
@@ -48,6 +58,7 @@ temp3$upper.CL <- sprintf("%.0f",temp3$upper.CL)
 print(temp3)
 }
 
+# Calculate the contrasts between tanks for the generalised linear models
 calc_contrasts_bin <- function(model){ 
   temp <- emmeans(model, ~ Tank) %>% 
     contrast(.,

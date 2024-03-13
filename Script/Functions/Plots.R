@@ -1,4 +1,4 @@
-# plot to see all behaviours
+# plot to see all behaviour types
 plot1 <- function(x_var, facet_var = NULL){
   palette = c("#6ACB4F", "#80DFFF", "#13AADD","#0D7496" ,"#CE2A2A","#CDA2AB","#F07131", "#34B380","grey")
   tf(data, grouping = c(x_var, facet_var), beh.cols.full, colMeans) %>% 
@@ -10,12 +10,12 @@ plot1 <- function(x_var, facet_var = NULL){
     theme(legend.position="bottom")
 }
 
-# plot distributions
+# plot distribution of the behavioural type
 hist1 <- function(x, main = deparse(substitute(x))){
   hist(x, breaks = seq(0,600,10), main = main)
 }
 
-# plot one variable at a time
+# plot one behavioural type by tank
 plot_var <- function(data, variable){
   means_tank <- aggregate(data[,variable], list(data[,"Tank"]), mean) %>% 
     setNames(.,c("Tank", variable))
@@ -25,7 +25,7 @@ plot_var <- function(data, variable){
     geom_point(data = means_tank,colour = "red", size = 4, alpha = .5)
 }
 
-# plot one variable at a time for each fish
+# plot one behavioural type by tank and by fish
 plot_var_fish <- function(data, variable){
   means_tank <- aggregate(data[,variable], list(data[,"Tank"]), mean) %>% 
     setNames(.,c("Tank", variable))

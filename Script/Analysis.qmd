@@ -180,10 +180,8 @@ Repeatability is quite low (0.2)
 ```{r}
 rand(mSwimming) 
 
-mSwimming0 <- lm(Swimming ~ Tank + Time + Filter, data = data)
-anova(mSwimming, mSwimming0)
 
-rd <- rpt(julian_departure ~ factor(year)+sex+departure_period+(1|tag_id), grname = "tag_id", data = data, datatype = "Gaussian", nboot = 0, npermut = 0)
+rd <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 print(rd)
 ```
 
@@ -233,7 +231,9 @@ Effect of Tank and Time.
 + Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 110 sec [CI 39, 181] more than fish in Jar (over a 600 sec trial), and 114 sec [CI 53, 175] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
 + Time. Fish rest less time in the morning, especially at 7 am. In line with the PCA and the results of Swimming.
 
+XXXXXXXXXXXXX
 The repeatability is OK 0.37
+XXXXXXXXXXXXX
 
 ## Diagnosis
 
@@ -243,6 +243,7 @@ lm_diagnosis(mResting)
 
 The model seems good.
 
+XXXXXXXXXXXXX
 ## Resting place
 
 Just a plot with the amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials. 
@@ -280,7 +281,8 @@ tf(data_RP , grouping = c("Resting.place","Fish"), c("Resting","Swimming"), colM
 
 For the resting place, I don't really know what to do and in fact what would be interesting to analyse. Fish are already shifting their resting places between tanks just because they have access to new resting places (filter, plants).
 
-It might be just interesting to say that fish use different places to rest, not only one type. It is particularly visible in Large where fish use all types of resting places. 
+It might be just interesting to say that fish use different places to rest, not only one type. It is particularly visible in Large where fish use all types of resting places.
+XXXXXXXXXXXXX
 
 :::
 
@@ -343,6 +345,8 @@ plotResiduals(mForaging_res, form = data$Filter)
 
 The model seems good.
 
+XXXXXXXXXXXX Repeatability and between-individual differences
+
 :::
 
 # Stereotypic swimming
@@ -364,7 +368,7 @@ Idem Foraging. Analysis as binary variable if the fish performs stereotypic swim
 ```{r}
 #| warning: false
 plot_var_binary(data, "SS.bin")
-plot_var_binary(data, "SS.bin") + facet_wrap(~Fish)
+plot_var_binary_fish(data, "SS.bin")
 ```
 
 Huge variability between fish as always. Some fish never performed stereotypic swimming while some in all tanks. 
@@ -469,7 +473,21 @@ quantile(data$Hovering)
 hist1(data$Hovering[data$Hovering!=0])
 ```
 
-Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. Even after removing the zeros, the distribution does not look like normal. Unless having a better idea, Hovering will be analysed as a binary variable. 
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. Even after removing the zeros, the distribution does not look like normal. Tring transformation
+
+```{r}
+ggplot(data, aes(x = log(Hovering + 1)))+
+  geom_histogram(bins = 10, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 4)))+
+  geom_histogram(bins = 10, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 7)))+
+  geom_histogram(bins = 10, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 10)))+
+  geom_histogram(bins = 10, fill = grey(0.75), color="black")
+```
+
+
+
 
 ## Plot 
 

@@ -31,9 +31,15 @@ levels(master$Filter) <- c("No-filter", "Filter")
 beh.cols <- c("Resting", "Swimming", "Hovering", "Sinking.Floating", "Stereotypic.swimming", "Nest.building", "Foraging",  "Interation.with.surface")
 beh.cols.full <- c(beh.cols, "Out.of.view")
 
-# function to transform the master file into data per fish per trial
+# transforming the raw dataset into the dataset
+# each row of the raw dataset is a time spent by a fish doing a certain behavioural type 
+# for a same trial, there could be several scored times of the same behaviour
+# the following function is then summing all the times corresponding to a similar behaviour (or applying any function providing in the "fct" attribute)
+# this can be done by different grouping columns ("grouping" attribute), for instance by Tank, or by Tank and Fish
+# the "beh.cols" attribute indicates which behavioural types to consider
+## transforming function
 tf <- function(data, grouping, beh.cols, fct){
-  list <- split(data, data[,grouping])
+  list <- split(data, data[,grouping]) # split the data.frame into a list where each list item is a sub data.frame splitted by the grouping factors
   list2 <- list[sapply(list, nrow)!=0] # filter empty list items
   result <- lapply(list2,
                    function(sub.data){
@@ -51,14 +57,15 @@ tf <- function(data, grouping, beh.cols, fct){
   result2
 }
 
-# creating the main data files
-## main file. All the behaviours summed for each trial
+## create the main file used for the analysis
 grouping <- c("Fish","Tank","Order","Time", "Filter")
 fct <- function(x) colSums(x, na.rm = TRUE)
 data <- tf(master, grouping, beh.cols.full, fct) 
-## main file with up and down distinguished
+
+## main file with up and down
 grouping <- c("Fish","Tank","Order","Time", "Up.Down", "Filter")
 dataUpDown <- tf(master, grouping, beh.cols.full, fct)
+
 
 # PCA
 pca <- PCA(data[,beh.cols], graph = FALSE, ncp=3, scale.unit = TRUE)
