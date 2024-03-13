@@ -21,8 +21,11 @@ plot_var <- function(data, variable){
     setNames(.,c("Tank", variable))
   
   ggplot(data, aes_string(y = variable, x = "Tank")) +
-    geom_jitter(alpha = .5, width = 0.025, height=0, color = grey(0.5))+
-    geom_point(data = means_tank,colour = "red", size = 4, alpha = .5)
+    geom_jitter(alpha = .5, width = 0.025, height=0, color = grey(0.25)) +
+    stat_summary(fun.y = mean,geom = "point",colour = "red", size = 4, alpha = .5)+
+    stat_summary(fun.min = function(x) mean(x) - sd(x), 
+                 fun.max = function(x) mean(x) + sd(x), 
+                 geom = "errorbar",colour = "red", alpha = .5, width = 0.15)
 }
 
 # plot one behavioural type by tank and by fish

@@ -163,8 +163,9 @@ The second plot is to see the trend by fish and by tank. Thick red line is the o
 
 ```{r}
 #| warning: false
-plot_var(data, "Swimming")
+plot_var(data, "Swimming") + ylab("Time spent swimming (sec)")
 plot_var_fish(data, "Swimming")
+plot_var_fish2(data, "Swimming")
 ```
 
 ## Linear model 
@@ -193,6 +194,10 @@ rand(mSwimming)
 
 rd <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 print(rd)
+
+# first time if running the script
+rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+save(rpt.swimming, file = "Scripts/Repeatability rptR/rpt.swimming")
 ```
 
 
@@ -317,7 +322,8 @@ The plots are in count of trials. Green represents trials in which the fish fora
 ```{r}
 #| warning: false
 plot_var_binary(data, "Foraging.bin")
-plot_var_binary(data, "Foraging.bin") + facet_wrap(~Fish)
+plot_var_binary_fish(data, "Foraging.bin")
+
 ```
 
 ## Generalised linear model 

@@ -18,6 +18,7 @@ library(fitdistrplus)
 library(glmmTMB)
 library(car)
 library(DHARMa)
+library(rptR) # calculate CI of repeatability
 
 # The loaded file is the Master.csv and not the excel Master.xlsx
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
