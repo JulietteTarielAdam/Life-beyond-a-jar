@@ -28,30 +28,24 @@ plot_var <- function(data, variable){
                  geom = "errorbar",colour = "red", alpha = .5, width = 0.15)
 }
 
+# color palette fish
+palette <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
+
+
 # plot one behavioural type by tank and by fish
 plot_var_fish <- function(data, variable){
   means_tank <- aggregate(data[,variable], list(data[,"Tank"]), mean) %>% 
     setNames(.,c("Tank", variable))
   means_fish <- aggregate(data[,variable], list(data[,"Tank"],data[,"Fish"]), mean) %>% 
-    setNames(.,c("Tank", "Fish", variable))
-
-ggplot(means_fish ,aes_string(y = variable, x = "Tank")) +
-  geom_line(data = means_tank, aes(group=1), colour = "red", alpha = .5)+
-  geom_point(data = data, alpha=.8)+
-  geom_point(size = 2, alpha = .5)+
-  geom_line(aes(group=Fish))+
-  facet_wrap(~Fish)
-}
-
-plot_var_fish2 <- function(data, variable){
-  means_tank <- aggregate(data[,variable], list(data[,"Tank"]), mean) %>% 
-    setNames(.,c("Tank", variable))
-  means_fish <- aggregate(data[,variable], list(data[,"Tank"],data[,"Fish"]), mean) %>% 
-    setNames(.,c("Tank", "Fish", variable))
+    setNames(.,c("Tank", "Fish", variable)) %>% 
+    mutate(label = if_else(Tank == "Barren", as.character(Fish), NA_character_))
   
-  ggplot(means_fish ,aes_string(y = variable, x = "Tank")) +
-    geom_line(data = means_tank, aes(group=1), colour = "red", lwd = 2)+
-    geom_line(aes(group=Fish))
+  ggplot(means_fish ,aes_string(y = variable, x = "Tank", color="Fish")) +
+    geom_line(aes(group=Fish), lwd = 1.2) + 
+    guides(color=FALSE)+
+    scale_color_manual(values=palette)+
+    geom_line(data = means_tank, aes(group=1), colour = "black", lwd = 2, linetype = "dashed")+
+    geom_label_repel(aes(label = label), na.rm = TRUE)
 }
 
 # Plot binary

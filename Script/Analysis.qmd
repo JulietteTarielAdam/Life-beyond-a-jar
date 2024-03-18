@@ -1,6 +1,7 @@
 ---
-title: "Analysis of Naomi's data by Juliette. Influence of the tank on Betta's behaviour."
+title: "Code of the statistical analysis for the article 'Life Beyond A Jar: Effects of Tank Size and Enrichment on the Behaviour and Welfare of Siamese Fighting Fishes'"
 date: "`r Sys.Date()`"
+author: "Juliette Tariel-Adam"
 format: 
    html:
     embed-resources: true
@@ -15,7 +16,7 @@ knitr:
 
 ```{r}
 #| include: false
-# This code allows to run the scripts that load the data and that contains the functions to plot and do the linear models
+# Run the scripts that load the data and that contains the functions to plot and do the linear models
 source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
@@ -31,9 +32,9 @@ On the html knitted output of this script, you fill find below a first row of ta
 
 After staying 3-7 days in a tank, the behaviour of all fish were scored by four 10-min trials in this tank. All trials occurred the same day at 4 different times (7 am, 10 am, 2 pm, 6 pm). During the 10 min trial = 600 sec, the fish's behaviour was assigned to one of the 9 behaviours, meaning that the behaviours are mutually exclusive (a fish can't be scored as nest building and interacting with the surface at the same time): Resting, Swimming, Hovering, Sinking/Floating, Stereotypic swimming, Nest building, Foraging, Interation with surface, Out of view.
 
-Out.of.view is a bit special because it is not a behaviour and was not analyse.
+Out.of.view is a bit special because it is not a behaviour and was not analysed.
 
-Sinking/Floating was not analyse (see explanation in the conclusion of the PCA section).
+Sinking/Floating was not analysed (see explanation in the conclusion of the PCA section).
 
 ```{r}
 summary(data)
@@ -164,8 +165,7 @@ The second plot is to see the trend by fish and by tank. Thick red line is the o
 ```{r}
 #| warning: false
 plot_var(data, "Swimming") + ylab("Time spent swimming (sec)")
-plot_var_fish(data, "Swimming")
-plot_var_fish2(data, "Swimming")
+plot_var_fish(data, "Swimming") + ylab("Time spent swimming (sec)")
 ```
 
 ## Linear model 

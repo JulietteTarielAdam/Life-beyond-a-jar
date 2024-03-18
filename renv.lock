@@ -1829,6 +1829,17 @@
       ],
       "Hash": "7bca0c1c6f188b195a5f380b8e73b91a"
     },
+    "pbapply": {
+      "Package": "pbapply",
+      "Version": "1.7-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "parallel"
+      ],
+      "Hash": "68a2d681e10cf72f0afa1d84d45380e5"
+    },
     "pbkrtest": {
       "Package": "pbkrtest",
       "Version": "0.5.2",
@@ -2286,6 +2297,21 @@
         "R"
       ],
       "Hash": "1de7ab598047a87bba48434ba35d497d"
+    },
+    "rptR": {
+      "Package": "rptR",
+      "Version": "0.9.22",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "lme4",
+        "methods",
+        "parallel",
+        "pbapply",
+        "stats"
+      ],
+      "Hash": "ce9f3f9992bdd77abb07516717ff41f2"
     },
     "rstatix": {
       "Package": "rstatix",
