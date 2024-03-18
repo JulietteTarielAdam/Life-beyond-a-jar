@@ -336,11 +336,12 @@ Anova(mForaging)
 
 calc_contrasts_bin(mForaging)
 # example of differences between Jar and Large
+## Contrast estimate
 1/0.08
-## Upper CI
-1/0.014
 ## Lower CI
 1/0.437
+## Upper CI
+1/0.014
 ```
 
 Effect of Tank. 
@@ -348,6 +349,20 @@ Effect of Tank.
 As a reminder, an odds.ratio < 1 between tank X vs tank Y means the probability of foraging during a trial in tank X is smaller that the probability of foraging during a trial in tank Y. An odd ratio for instance of 0.2 means that a fish is (1 / 0.2) = five times more likely to forage during a trial in tank Y than in Tank X. If we imagine 5 trials, fish will forage on average during 1 trial out of 5 in Tank X whereas fish will forage on average during 5 trials out of 5 in Tank Y. 
 
 + Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 13 times [CI 2, 71] more likely to forage during a trial than fish in Jar, 25 times [CI 4, 166] than fish in Small, and 4 times [CI 1, 13] than fish in Medium. In addition, fish were 15 times [CI 3, 63] more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium.
+
+## Between-fish diff
+
+```{r}
+rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
+
+mForaging0 <- glm(Foraging.bin ~ Tank + Time + Filter, data = data, family =binomial)
+lrtest(mForaging0, mForaging)
+
+```
+
+Error when calculating the repeatability with rptR. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable.
+
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of foraging. 
 
 ## Diagnosis 
 
@@ -360,8 +375,6 @@ plotResiduals(mForaging_res, form = data$Filter)
 ```
 
 The model seems good.
-
-XXXXXXXXXXXX Repeatability and between-individual differences
 
 :::
 
