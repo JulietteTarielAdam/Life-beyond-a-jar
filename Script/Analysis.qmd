@@ -124,11 +124,8 @@ The PCA did not help reduce the number of variables to analyse (see Analysis_PCA
 Even if we did not use PCA for further analysis, the first 3 components are plotted below, which explained 57% of variance in the data, to show the important variables and the correlations between variables. 
 
 ```{r}
-(plot1 <- plot(pca, choix = "var") + labs(title = NULL))
-(plot2 <- plot(pca, choix = "var", axes = c(1,3)) + labs(title = NULL))
-# Export plots
-arrange <- ggarrange(plot1, plot2, labels =LETTERS[1:2])
-ggsave(arrange, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
+(plotPCA1 <- plot(pca, choix = "var") + labs(title = NULL))
+(plotPCA2 <- plot(pca, choix = "var", axes = c(1,3)) + labs(title = NULL))
 ```
 
 ```{r}
@@ -160,12 +157,12 @@ hist1(data$Swimming)
 
 The first plot is to see the trend by tank. Big red dots is for the overall mean  by tank. Small black points are raw data = resting time for each trial. 
 
-The second plot is to see the trend by fish and by tank. Thick red line is the overall mean by tank. Thin black lines are the mean for each fish by tank. 
+The second plot is to see the trend by fish and by tank.The dashed black line is the overall means by tank. The other lines are the means for each fish by tank. 
 
 ```{r}
 #| warning: false
-plot_var(data, "Swimming") + ylab("Time spent swimming (sec)")
-plot_var_fish(data, "Swimming") + ylab("Time spent swimming (sec)")
+(plotSwimming1 <- plot_var(data, "Swimming"))
+(plotSwimming2 <- plot_var_fish(data, "Swimming"))
 ```
 
 ## Linear model 
@@ -184,21 +181,17 @@ Effect of Tank, Time and Filter!
 + Time. Fish swim more in the morning than in the afternoon, especially at 7 am.
 + Filter. Fish swim more with a filter in their tank.
 
-## Between-fish differences
-
-Repeatability is quite low (0.2)
+## Between-fish diff
 
 ```{r}
-rand(mSwimming) 
-
-
-rd <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
-print(rd)
-
 # first time if running the script
-rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
-save(rpt.swimming, file = "Scripts/Repeatability rptR/rpt.swimming")
+## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## save(rpt.swimming, file = "Script/Repeatability rptR output/rpt.swimming")
+base::load("Script/Repeatability rptR output/rpt.swimming")
+summary(rpt.swimming)
 ```
+
+The repeatability is quite low (0.2).
 
 
 ## Diagnosis
@@ -208,6 +201,7 @@ lm_diagnosis(mSwimming)
 ```
 
 The model seems good.
+
 :::
 
 # Resting
@@ -227,8 +221,8 @@ Only 11 trials where the fish did not rest at all.
 
 ```{r}
 #| warning: false
-plot_var(data, "Resting")
-plot_var_fish(data, "Resting")
+(plotResting1 <- plot_var(data, "Resting"))
+(plotResting2 <- plot_var_fish(data, "Resting"))
 ```
 
 ## Linear model 
@@ -246,9 +240,17 @@ Effect of Tank and Time.
 + Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 110 sec [CI 39, 181] more than fish in Jar (over a 600 sec trial), and 114 sec [CI 53, 175] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
 + Time. Fish rest less time in the morning, especially at 7 am. In line with the PCA and the results of Swimming.
 
-XXXXXXXXXXXXX
+## Between-fish diff
+
+```{r}
+# first time if running the script
+## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## save(rpt.resting, file = "Script/Repeatability rptR output/rpt.resting")
+base::load("Script/Repeatability rptR output/rpt.resting")
+summary(rpt.resting)
+```
+
 The repeatability is OK 0.37
-XXXXXXXXXXXXX
 
 ## Diagnosis
 
@@ -258,12 +260,9 @@ lm_diagnosis(mResting)
 
 The model seems good.
 
-XXXXXXXXXXXXX
 ## Resting place
 
-Just a plot with the amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials. 
-
-> Problem ->  Resting on plants in Barren and Jar??
+Just a plot with the amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials and fish. 
 
 ```{r}
 #| column: page
@@ -275,29 +274,31 @@ data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),],
   filter(Resting.place!= "N/A") %>% 
   mutate(Resting.place = fct_drop(Resting.place),
          Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
+
 palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#84B05D","#84B05D", "#6B4921","#6B4921", "#B8B8B8")
 
-tf(data_RP , grouping = c("Resting.place","Tank"), c("Resting","Swimming"), colMeans)  %>% 
-    ggplot(., aes(fill = Resting.place, y = Resting, x = Resting.place))+
-    geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
+(plotRP1 <- ggplot(data_RP, aes(y = Resting, x = Resting.place,fill = Resting.place)) +
+  stat_summary(fun = mean,geom = "bar", size = 4)+
+  geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
+  scale_color_manual(values=palette_RP)+
+  facet_wrap(~Tank)+
+  guides(fill = FALSE)+
   scale_fill_manual(values = palette_RP)+
-  facet_wrap("Tank")+
-  theme(axis.text.x = element_text(angle=45,hjust=1),
-        legend.position="none")
+  ylab("Time spent resting (sec)")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)))
 
-tf(data_RP , grouping = c("Resting.place","Fish"), c("Resting","Swimming"), colMeans)  %>% 
-    ggplot(., aes(fill = Resting.place, y = Resting, x = Resting.place))+
-    geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
+(plotRP2 <- ggplot(data_RP, aes(y = Resting, x = Resting.place,fill = Resting.place)) +
+  stat_summary(fun = mean,geom = "bar", size = 4)+
+  geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
+  scale_color_manual(values=palette_RP)+
+  facet_wrap(~Fish)+
+  guides(fill = FALSE)+
   scale_fill_manual(values = palette_RP)+
-  facet_wrap("Fish")+
-  theme(axis.text.x = element_text(angle=45,hjust=1),
-        legend.position="none")
+  ylab("Time spent resting (sec)")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)))
 ```
 
-For the resting place, I don't really know what to do and in fact what would be interesting to analyse. Fish are already shifting their resting places between tanks just because they have access to new resting places (filter, plants).
-
-It might be just interesting to say that fish use different places to rest, not only one type. It is particularly visible in Large where fish use all types of resting places.
-XXXXXXXXXXXXX
+From the graphs, we can see that fish use different places to rest, not only one type. They use all the different places available. It does not seem that there is a preferred resting place. 
 
 :::
 
@@ -313,7 +314,7 @@ table(data$Foraging==0)
 descdist(data$Foraging, boot = 1000, print = FALSE)
 ```
 
-The data are clearly not following a normal distribution. It seems that they could possibly follow a beta distribution but I thought beta distributions were when the variable is between 0 and 1. I decided therefore to analyse Foraging in binary: 1 if fish spent time foraging during this trial, 0 otherwise.
+The data are clearly not following a normal distribution. It seems that they could possibly follow a beta distribution but I thought beta distributions were when the variable is between 0 and 1. Foraging has thus been analysed as a binary variable: 1 if fish spent time foraging during this trial, 0 otherwise.
 
 ## Plot 
 
@@ -323,7 +324,6 @@ The plots are in count of trials. Green represents trials in which the fish fora
 #| warning: false
 plot_var_binary(data, "Foraging.bin")
 plot_var_binary_fish(data, "Foraging.bin")
-
 ```
 
 ## Generalised linear model 
@@ -715,6 +715,20 @@ ggplot(.,aes(y = Resting, x = Tank, color = Up.Down)) +
 ```
 
 Irrespective of the tanks, the fish rested more time on the lower half of the tank than the upper half. This lower/upper difference in resting time was more or less pronounced depending on the tank.
+
+# Figures for the paper
+```{r}
+(plotPCA1 <- plot(pca, choix = "var") + labs(title = NULL))
+(plotPCA2 <- plot(pca, choix = "var", axes = c(1,3)) + labs(title = NULL))
+(plotSwimming <- plot_var(data, "Swimming") + ylab("Time spent swimming (sec)"))
+
+arrange <- ggarrange(plotPCA1, plotPCA2, labels =LETTERS[1:2])
+ggsave(arrange, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
+```
+
+
+plotRP1
+plotRP2
 
 # Conclusion
 

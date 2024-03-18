@@ -21,11 +21,11 @@ plot_var <- function(data, variable){
     setNames(.,c("Tank", variable))
   
   ggplot(data, aes_string(y = variable, x = "Tank")) +
-    geom_jitter(alpha = .5, width = 0.025, height=0, color = grey(0.25)) +
-    stat_summary(fun.y = mean,geom = "point",colour = "red", size = 4, alpha = .5)+
+    geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
+    stat_summary(fun.y = mean,geom = "point",colour = "red", size = 4)+
     stat_summary(fun.min = function(x) mean(x) - sd(x), 
                  fun.max = function(x) mean(x) + sd(x), 
-                 geom = "errorbar",colour = "red", alpha = .5, width = 0.15)
+                 geom = "errorbar",colour = "red", width = 0.15)
 }
 
 # color palette fish
