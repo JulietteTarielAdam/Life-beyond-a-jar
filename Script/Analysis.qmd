@@ -623,8 +623,8 @@ Idem analysis binary generalised linear models.
 
 ```{r}
 #| warning: false
-plot_var_binary(data, "Interacting.bin")
-plot_var_binary(data, "Interacting.bin") + facet_wrap(~Fish)
+(plotInteracting1 <- plot_var_binary(data, "Interacting.bin"))
+(plotInteracting2 <- plot_var_binary_fish(data, "Interacting.bin"))
 ```
 
 ## Generalised linear model 
@@ -640,7 +640,7 @@ calc_contrasts_bin(mInteracting)
 
 Effect of Tank.
 
-+ Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). Fish in Jar were XX times [CI XX, XX] more likely to interact with the surface during a trial than fish in Large, and Fish in Medium were XX times [CI XX, XX] then fish in Large (do the same calculation than Foraging or Stereotypic Swimming). In addition, fish were XX times [CI XX, XX] more likely to interact with a surface during a trial in Barren than in Large. 
++ Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). Fish in Jar were 4 times [CI 1, 18] more likely to interact with the surface during a trial than fish in Large, and Fish in Medium were 6 times [CI 2, 23] then fish in Large. In addition, fish were 3 times [CI 1, 12] more likely to interact with a surface during a trial in Barren than in Large. 
 
 ## Diagnosis
 

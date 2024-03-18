@@ -52,7 +52,7 @@ plot_var_fish <- function(data, variable){
 plot_var_binary <- function(data, variable){
   data2 <- aggregate(data[,variable], 
                      list(data[,"Tank"]), 
-                     function(x) sum(as.integer(x)-1))%>% 
+                     function(x) (sum(as.integer(x)-1)/length(x))*100)%>% # calculate percentage of trials 
     setNames(.,c("Tank", variable))
   ggplot(data2, aes_string(y= variable,x = "Tank"))+
     geom_bar(stat= "identity",fill=grey(0.8), color = "black")+
@@ -62,7 +62,7 @@ plot_var_binary <- function(data, variable){
 plot_var_binary_fish <- function(data, variable){
   data2 <- aggregate(data[,variable], 
                      list(data[,"Tank"], data[,"Fish"]), 
-                     function(x) sum(as.integer(x)-1))%>% 
+                     function(x) (sum(as.integer(x)-1)/length(x))*100)%>% 
     setNames(.,c("Tank", "Fish", variable))
   ggplot(data2, aes_string(y= variable,x = "Tank"))+
     geom_bar(stat= "identity",fill=grey(0.8), color = "black")+
