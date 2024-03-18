@@ -322,8 +322,8 @@ The plots are in count of trials. Green represents trials in which the fish fora
 
 ```{r}
 #| warning: false
-plot_var_binary(data, "Foraging.bin")
-plot_var_binary_fish(data, "Foraging.bin")
+(plotForaging1 <- plot_var_binary(data, "Foraging.bin"))
+(plotForaging2 <- plot_var_binary_fish(data, "Foraging.bin"))
 ```
 
 ## Generalised linear model 
@@ -353,11 +353,12 @@ As a reminder, an odds.ratio < 1 between tank X vs tank Y means the probability 
 ## Between-fish diff
 
 ```{r}
+# Attempt to calculate repeatability
 rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
 
+# Likelihood ratio test of random effect
 mForaging0 <- glm(Foraging.bin ~ Tank + Time + Filter, data = data, family =binomial)
 lrtest(mForaging0, mForaging)
-
 ```
 
 Error when calculating the repeatability with rptR. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable.
@@ -396,8 +397,8 @@ Idem Foraging. Analysis as binary variable if the fish performs stereotypic swim
 
 ```{r}
 #| warning: false
-plot_var_binary(data, "SS.bin")
-plot_var_binary_fish(data, "SS.bin")
+(plotSS1 <- plot_var_binary(data, "SS.bin"))
+(plotSS2 <- plot_var_binary_fish(data, "SS.bin"))
 ```
 
 Huge variability between fish as always. Some fish never performed stereotypic swimming while some in all tanks. 
@@ -416,6 +417,21 @@ calc_contrasts_bin(mSS)
 Effect of Tank. 
 
 + Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Fish in Small were 33 times [CI 4, 333] more likely to perform stereotypic swimming during a trial than fish in Jar.
+
+## Between-fish diff
+
+```{r}
+# Attempt to calculate repeatability
+rpt.SS <- rpt(SS.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
+
+# Likelihood ratio test of random effect
+mSS0 <- glm(SS.bin ~ Tank + Time + Filter, data = data, family =binomial)
+lrtest(mSS0, mSS)
+```
+
+Error when calculating the repeatability with rptR. 
+
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of stereotypic swimming. 
 
 ## Diagnosis
 
@@ -444,27 +460,20 @@ data_SST <- tf(master[master$Stereotypic.swimming !=0 & !is.na(master$Stereotypi
             c("Stereotypic.swimming","Swimming"), # I have to specify two columns otherwise my function tf is not working
             function(x) colSums(x, na.rm = TRUE))
 
-ggplot(data_SST, aes(fill = Stereotypic.swimming.type, x = Tank))+
+ggplot(data_SST, aes(fill = Stereotypic.swimming.type2, x = Tank))+
     geom_bar(stat= "count",color=grey(0.4))+
     theme(legend.position="bottom")+
     ylab("Count of trials")
 
-# Remove Group 1 and Group 2
-data_SST %>% filter(Stereotypic.swimming.type!= "Group 1",
-                Stereotypic.swimming.type!= "Group 2") %>% 
-ggplot(., aes(fill = Stereotypic.swimming.type, x = Tank))+
-    geom_bar(stat= "count",color=grey(0.4))+
-    theme(legend.position="bottom")+
-    ylab("Count of trials")
+# Grouping type of stereotypic swimming together
+data_SST$Stereotypic.swimming.type2 <- factor(data_SST$Stereotypic.swimming.type, 
+                                              labels = c("Circles", "Pacing", "Pacing", "Pacing","Pacing", "Zig Zag"))
 ```
-
-Problem in the data: what is "Group1" and "Group2"? Check the data. 
-
-Similarly with the types of Interaction with Surface, I suggest grouping different types of stereotypic swimming together to make it clearer.
 
 It seems that there are not differences between tanks. Just circles seem specific to larger tanks (Medium/Large/Barren).
 
 I did not plot the place where the stereotypic swimming happens. Tell me if you need it. 
+
 
 ## Stereotypic Swimming repetitions
 
@@ -481,10 +490,10 @@ hist(data_SST2$Stereotypic.swimming.number.of.repititions)
 data_SST2 %>%
   mutate(Nb.rep = Stereotypic.swimming.number.of.repititions) %>% 
   dplyr::select(Tank, Fish, Time, Stereotypic.swimming.type, Nb.rep) %>% 
-  arrange(Tank, Fish, Time)
+  arrange(Fish, Tank, Time)
 ```
 
-I don't think there are enough repetitions to really say something about the number of repetitions. The number of repetitions seems pretty unique to a fish in a certain tank. I don't see a pattern depending on the tank. The interesting thing is that the stereotypic swimming seemed consistent in a tank for a fish (most or all trials of that day with stereotypic swimming). I don't know if it is possible to calculate the repeatability of a binomial glm, but it would be interesting. 
+I don't think there are enough data to really say something about the number of repetitions. The number of repetitions seems pretty unique to a fish in a certain tank. I don't see ab obvious pattern depending on the tank. The interesting thing is that the stereotypic swimming seemed consistent in a tank for a fish (most or all trials of that day with stereotypic swimming). It is a pitty we couldn't calculate the repeatability of the binomial glm of Stereotypic Swimming because it would have been interesting. 
 
 :::
 
@@ -499,24 +508,35 @@ hist1(data$Hovering)
 table(data$Hovering==0)
 descdist(data$Hovering, boot = 1000, print = FALSE)
 quantile(data$Hovering)
-hist1(data$Hovering[data$Hovering!=0])
+hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
 ```
 
-Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. Even after removing the zeros, the distribution does not look like normal. Tring transformation
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. 
 
 ```{r}
 ggplot(data, aes(x = log(Hovering + 1)))+
-  geom_histogram(bins = 10, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 4)))+
-  geom_histogram(bins = 10, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 7)))+
-  geom_histogram(bins = 10, fill = grey(0.75), color="black")
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 5)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
 ggplot(data, aes(x = log(Hovering + 10)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 15)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 20)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 25)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 30)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 50)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 70)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 103)))+
   geom_histogram(bins = 10, fill = grey(0.75), color="black")
 ```
 
-
-
+XXXX OK to do log(x + 103)????
 
 ## Plot 
 
@@ -533,6 +553,7 @@ plot_var_binary(data, "Hovering.bin") + facet_wrap(~Fish)
 mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
 
 Anova(mHovering)
+
 emmeans(mHovering, ~ Time, type = "response")
 emmeans(mHovering, ~ Filter, type = "response")
 ```
