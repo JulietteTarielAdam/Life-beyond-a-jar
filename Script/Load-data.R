@@ -5,7 +5,7 @@ library(tidyverse)
 library(ggplot2) 
 library(ggpubr) # assemble multiple plots
 theme_set(theme_classic())
-library(viridis)
+library(RColorBrewer)
 library(ggforce) # facet_wrap_paginate
 ## for PCA analysis
 library(FactoMineR) 
@@ -16,6 +16,7 @@ library(emmeans)
 library(easystats)
 library(fitdistrplus)
 library(glmmTMB)
+library(lmtest) # lrtest() to do LRT with glmmTMB package
 library(car)
 library(DHARMa)
 library(rptR) # calculate CI of repeatability

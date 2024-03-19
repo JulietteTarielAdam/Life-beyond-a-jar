@@ -642,6 +642,15 @@ Effect of Tank.
 
 + Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). Fish in Jar were 4 times [CI 1, 18] more likely to interact with the surface during a trial than fish in Large, and Fish in Medium were 6 times [CI 2, 23] then fish in Large. In addition, fish were 3 times [CI 1, 12] more likely to interact with a surface during a trial in Barren than in Large. 
 
+## Between-fish diff
+
+```{r}
+mInteracting0 <- glm(Interacting.bin ~ Tank + Time + Filter, data = data, family =binomial)
+lrtest(mInteracting0, mInteracting)
+```
+
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of interaction with surface. 
+
 ## Diagnosis
 
 ```{r}
@@ -668,9 +677,17 @@ ggplot(data_IT, aes(fill = Interaction.with.surface.type, x = Tank))+
     geom_bar(stat= "count",color=grey(0.4))+
     theme(legend.position="bottom")+
     ylab("Count of trials")
-```
 
-Idem, it would be nice to group together certain types of interaction to make it clearer.
+# grouping types of interaction together
+data_IT$Interaction.with.surface.type2 <- factor(data_IT$Interaction.with.surface.type, 
+                                              labels = c(rep("Aggressive",8), rep("Bite",2), "Fold", rep("Head into",4),rep("Head shake/swim",5), "Bite",rep("Swim",2)))
+
+ggplot(data_IT, aes(fill = Interaction.with.surface.type2, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    theme(legend.position="bottom")+
+    ylab("Count of trials")
+
+```
 
 :::
 
@@ -685,14 +702,14 @@ hist1(data$Nest.building)
 table(data$Nest.building==0)
 ```
 
-There are 1 trial out of 5 where there was nest building. Analysis binary generalised model.
+There are 1 trial out of 5 where there was nest building. Analysis with binary generalised model.
 
 ## Plot 
 
 ```{r}
 #| warning: false
-plot_var_binary(data, "Nest.bin")
-plot_var_binary(data, "Nest.bin") + facet_wrap(~Fish)
+(plotNest1 <- plot_var_binary(data, "Nest.bin"))
+(plotNest2<- plot_var_binary_fish(data, "Nest.bin"))
 ```
 
 ## Generalised linear model 
@@ -710,6 +727,15 @@ emmeans(mNest, ~ Filter, type = "response")
 Effect of Tank and Filter.
 + Tank. Despite a significant effect of Tank, no contrasts were statistically significant. This is usual when you have a weakly significant fixed effect of a factor (0.01 < p-value < 0.05) which has a lot of different levels. In terms of trend, fish in Jar seemed less likely to build a nest compared to Small/Medium/Large. In addition, fish in Barren were less likely to build nest than fish in Large. 
 + Filter. Fish were more likely to build a nest without a filter in their tank.
+
+## Between-fish diff
+
+```{r}
+mNest0 <- glm(Nest.bin ~ Tank + Time + Filter, data = data, family =binomial)
+lrtest(mNest0, mNest)
+```
+
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of nest building. 
 
 ## Diagnosis
 
