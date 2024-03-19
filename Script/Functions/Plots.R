@@ -17,9 +17,6 @@ hist1 <- function(x, main = deparse(substitute(x))){
 
 # plot one behavioural type by tank
 plot_var <- function(data, variable){
-  means_tank <- aggregate(data[,variable], list(data[,"Tank"]), mean) %>% 
-    setNames(.,c("Tank", variable))
-  
   ggplot(data, aes_string(y = variable, x = "Tank")) +
     geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
     stat_summary(fun.y = mean,geom = "point",colour = "red", size = 4)+

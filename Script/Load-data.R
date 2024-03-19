@@ -5,21 +5,20 @@ library(tidyverse)
 library(ggplot2) 
 library(ggpubr) # assemble multiple plots
 theme_set(theme_classic())
-library(RColorBrewer)
-library(ggforce) # facet_wrap_paginate
+library(RColorBrewer) # nice color palette
 ## for PCA analysis
-library(FactoMineR) 
+library(FactoMineR)  
 ## for linear model analysis
-library(lme4)
-library(lmerTest)
-library(emmeans)
-library(easystats)
-library(fitdistrplus)
-library(glmmTMB)
+library(lme4) # fit LMMs
+library(lmerTest) # type II F-tests with Kenward Roger estimation in LMMs
+library(emmeans) # estimate posthoc contrasts
+# library(easystats)
+library(fitdistrplus) # find potential distributions other than normal distribution
+library(glmmTMB) # fit the GLMMs
 library(lmtest) # lrtest() to do LRT with glmmTMB package
-library(car)
-library(DHARMa)
-library(rptR) # calculate CI of repeatability
+library(car) # test fixed effects of the GLMMs
+library(DHARMa) # estimate residuals for the GLMMs to do the diagnosis of the model
+library(rptR) # estimate CI of repeatability
 
 # The loaded file is the Master.csv and not the excel Master.xlsx
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
@@ -71,8 +70,9 @@ dataUpDown <- tf(master, grouping, beh.cols.full, fct)
 dataUpDown$Total <- rowSums(dataUpDown[,beh.cols.full])
 dataUpDown <- dataUpDown %>% 
  dplyr::select(-beh.cols.full) %>% 
- pivot_wider(values_from = Total, names_from = Up.Down) %>% 
- mutate(perc.up = up / (up + down))
+ pivot_wider(values_from = Total, names_from = Up.Down) 
+dataUpDown[is.na(dataUpDown$down), "down"] <- 0 # NA for down column if the fish spent all the trial up. Replace NA by 0
+dataUpDown$perc.up <- dataUpDown$up / (dataUpDown$up + dataUpDown$down)
 
 # PCA
 pca <- PCA(data[,beh.cols], graph = FALSE, ncp=3, scale.unit = TRUE)
