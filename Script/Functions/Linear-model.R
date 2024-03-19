@@ -7,18 +7,6 @@ lm_results <- function(model){
   print(summary(model)$coefficients)
 }
 
-# print the results of the random effect
-lm_results_random <- function(model){
-  print("Random effect test")
-  print(rand(model))
-  print("Random effect estimates")
-  random <- as.data.frame(summary(model)$varcor)
-  print(data.frame(Effect = random$grp,
-                 Variance = random$vcov))
-  print("Repeatability")
-  print(rpt(formula(model), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 0))
-  } 
-
 # provide diagnostic assumptions of linear models
 lm_diagnosis <- function(model){
   print("check linearity and constant variance over fitted values")
