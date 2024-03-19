@@ -28,7 +28,6 @@ plot_var <- function(data, variable){
 # color palette fish
 palette <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 
-
 # plot one behavioural type by tank and by fish
 plot_var_fish <- function(data, variable){
   means_tank <- aggregate(data[,variable], list(data[,"Tank"]), mean) %>% 

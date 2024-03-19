@@ -72,7 +72,13 @@ dataUpDown <- dataUpDown %>%
  dplyr::select(-beh.cols.full) %>% 
  pivot_wider(values_from = Total, names_from = Up.Down) 
 dataUpDown[is.na(dataUpDown$down), "down"] <- 0 # NA for down column if the fish spent all the trial up. Replace NA by 0
-dataUpDown$perc.up <- dataUpDown$up / (dataUpDown$up + dataUpDown$down)
+dataUpDown <- dataUpDown %>% 
+  mutate(total = up + down, 
+         up = round(up,0),
+         down = round(down, 0),
+         perc = up / (up + down),
+         adj.up = round((up *600) / total,0),
+         adj.down = round((down *600) / total,0))
 
 # PCA
 pca <- PCA(data[,beh.cols], graph = FALSE, ncp=3, scale.unit = TRUE)
