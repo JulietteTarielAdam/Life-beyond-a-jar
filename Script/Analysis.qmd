@@ -757,7 +757,7 @@ Research question: did fish use differently use the upper part or lower part of 
 
 ## Plot
 ```{r}
-ggplot(dataUpDown, aes(y = perc.up, x = Tank)) +
+ggplot(dataUpDown, aes(y = perc, x = Tank)) +
     geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
     stat_summary(fun.y = mean,geom = "point",colour = "red", size = 4)+
     stat_summary(fun.min = function(x) mean(x) - sd(x), 
@@ -770,7 +770,7 @@ It seems that the tank has an influence on whether fish prefer being on the uppe
 ## Model
 For percentages, we can fit a beta distribution. All percentages need to be 0 < perc < 100%. There are trials with 100% so we can't use beta distribution. 
 
-We can fit a binomial distribution. The percentages need to be counts. It works with counts of seconds (how many seconds the fish spend up of the tank), just needed to round the counts of seconds.
+We can fit a binomial distribution. The percentages need to be counts. It works with counts of seconds (how many seconds the fish spend up of the tank), just needed to round the counts of seconds. 
 
 
 ```{r}
