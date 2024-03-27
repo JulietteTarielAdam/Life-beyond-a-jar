@@ -19,6 +19,7 @@ library(lmtest) # lrtest() to do LRT with glmmTMB package
 library(car) # test fixed effects of the GLMMs
 library(DHARMa) # estimate residuals for the GLMMs to do the diagnosis of the model
 library(rptR) # estimate CI of repeatability
+library(performance) # for the function check_model
 
 # The loaded file is the Master.csv and not the excel Master.xlsx
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
@@ -77,8 +78,8 @@ dataUpDown <- dataUpDown %>%
          up = round(up,0),
          down = round(down, 0),
          perc = up / (up + down),
-         adj.up = round((up *600) / total,0),
-         adj.down = round((down *600) / total,0))
+         adj.up = round((up * 600) / total,0), # adjusted time up by the fact that the trial was not perfectly 600 s
+         adj.down = round((down * 600) / total,0)) # adjusted time down by the fact that the trial was not perfectly 600 s
 
 # PCA
 pca <- PCA(data[,beh.cols], graph = FALSE, ncp=3, scale.unit = TRUE)

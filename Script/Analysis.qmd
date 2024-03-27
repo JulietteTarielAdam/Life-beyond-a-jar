@@ -173,6 +173,7 @@ mSwimming <- lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = data)
 lm_results(mSwimming)
 calc_contrasts(mSwimming)
 emmeans(mSwimming, ~ Time) # estimated means of time spent swimming depending on the time of the day 
+emmeans(mSwimming, ~ Filter)
 ```
 
 Effect of Tank, Time and Filter! 
@@ -757,52 +758,49 @@ Research question: did fish use differently use the upper part or lower part of 
 
 ## Plot
 ```{r}
-ggplot(dataUpDown, aes(y = perc, x = Tank)) +
+ggplot(dataUpDown, aes(y = adj.up, x = Tank)) +
     geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
     stat_summary(fun.y = mean,geom = "point",colour = "red", size = 4)+
     stat_summary(fun.min = function(x) mean(x) - sd(x), 
                  fun.max = function(x) mean(x) + sd(x), 
-                 geom = "errorbar",colour = "red", width = 0.15)
+                 geom = "errorbar",colour = "red", width = 0.15)+
+  ylab("Time up (sec)")
 ```
 
 It seems that the tank has an influence on whether fish prefer being on the upper half or lower half of the tank.
 
 ## Model
-For percentages, we can fit a beta distribution. All percentages need to be 0 < perc < 100%. There are trials with 100% so we can't use beta distribution. 
 
-We can fit a binomial distribution. The percentages need to be counts. It works with counts of seconds (how many seconds the fish spend up of the tank), just needed to round the counts of seconds. 
+We can do different models:
++ Look at the percentage of time spent up of the trial. Fit a beta distribution. Problem: All percentages need to be 0 < perc < 100%. There are trials with 100% so we can't use beta distribution. 
 
++ Look at the count of seconds (how many seconds the fish spend up of the tank). Fit a binomial distribution. Problem: The diagnostics plots were very bad when fitting mUp <- glmmTMB(cbind(up, down) ~ Tank + Time + Filter + (1|Fish), data = dataUpDown, family = binomial)
+
++ Look simply at the actual time spent up. Fit a normal distribution. The response variable can be adjusted by the fact that the trial were not perfectly 600 sec. $adj.up= \frac{\text{time spent up} * 600}{\text{trial total duration}}$. It is what has been done.
 
 ```{r}
-mUp <- glmmTMB(cbind(up, down) ~ Tank + Time + Filter + (1|Fish), data = dataUpDown, family = binomial)
-mUp_res <- simulateResiduals(mUp)
-plot(mUp_res)
-Anova(mUp)
-
-mUp <- lm(cbind(up, down) ~ Tank + Time + Filter + (1|Fish), data = dataUpDown, family = binomial)
-
-calc_contrasts_bin(mUp)
-
-
-mUp2 <- lmer(up ~ Tank + Time + Filter + (1|Fish), data = dataUpDown)
-lm_diagnosis(mUp2)
-
+mUp <- lmer(adj.up ~ Tank + Time + Filter + (1|Fish), data = dataUpDown)
+lm_results(mUp)
+calc_contrasts(mUp)
+emmeans(mUp, ~ Time) # estimated means of time spent swimming depending on the time of the day 
+emmeans(mUp, ~ Filter) # estimated means of time spent swimming depending on the time of the day
 ```
 
-Rarely seen such bad diagnosis plots. 
+Effect of Tank, Time and Filter. 
+
++ Tank. The only statistically significant difference is in between Small and Medium: Fish in Small tank spent on average 103 more seconds [25, 181 95% CI] on the upper half of the tank compared to fish in Medium tanks.
++ Time. Fish spent more time on the upper half of the tank in the morning.
++ Filter. Fish spent more time on the upper half of the tank with a filter in their tank.
 
 ## Diagnosis
 
 ```{r}
-mUp_res <- simulateResiduals(mUp)
-plot(mUp_res)
-plotResiduals(mUp_res, form = dataUpDown$Tank)
-plotResiduals(mSS_res, form = data$Time)
-plotResiduals(mSS_res, form = data$Filter)
-# Problem with Filter, I retried the model without Filter
-mSS2 <- glmmTMB(SS.bin ~ Tank + Time + (1|Fish), data = data, family =binomial)
-plot(simulateResiduals(mSS2))
+lm_diagnosis(mUp)
 ```
+
+The model seems good.
+
+:::
 
 
 # Figures for the paper
