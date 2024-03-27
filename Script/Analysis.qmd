@@ -317,6 +317,8 @@ descdist(data$Foraging, boot = 1000, print = FALSE)
 
 The data are clearly not following a normal distribution. It seems that they could possibly follow a beta distribution but I thought beta distributions were when the variable is between 0 and 1. Foraging has thus been analysed as a binary variable: 1 if fish spent time foraging during this trial, 0 otherwise.
 
+There were 168 trials (out of 252) during which no foraging happened.
+
 ## Plot 
 
 The plots are in count of trials. Green represents trials in which the fish foraged, gray in which the fish did not forage. 
@@ -393,6 +395,8 @@ descdist(data$Stereotypic.swimming, boot = 1000, print = FALSE)
 ```
 
 Idem Foraging. Analysis as binary variable if the fish performs stereotypic swimming during a trial or not. 
+
+There were 172 trials (out of 252) during which no stereotypic swimming happened.
 
 ## Plot 
 
@@ -512,7 +516,76 @@ quantile(data$Hovering)
 hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
 ```
 
-Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. 
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened.
+
+We tried a glm with zero and zero-inflated poisson distribution, but the fit was not good.
+
+We tried a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
+So we end up doing a glm binomial like Foraging or Steretotypic Swmimming. And then conduct a linear model on the remaining 204 trials during which hovering happened. 
+
+## Plot 
+
+```{r}
+#| warning: false
+# Effect of tank of the probability to hover during a trial?
+plot_var_binary(data, "Hovering.bin")
+plot_var_binary_fish(data, "Hovering.bin")
+
+# Among the trials where the fish hovers, effect of tank on the amount of time hovering?
+data %>% filter(Hovering >0) %>% 
+  plot_var(., "Hovering")
+data %>% filter(Hovering >0) %>% 
+  plot_var_fish(., "Hovering")
+```
+
+## Generalised linear model 
+
+Y variable = probability to hover during a trial
+
+```{r}
+#| column: page
+mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering!=0,])
+
+Anova(mHovering)
+
+emmeans(mHovering, ~ Time, type = "response")
+emmeans(mHovering, ~ Filter, type = "response")
+```
+
+No effect of Tank on the probability to hover during a trial, only an effect of Time and filter
+
++ Time. Fish were less likely to hover in the afternoon.
++ Filter. Fish were less likely to hover with a filter in their tank.
+
+```{r}
+mHovering_res <- simulateResiduals(mHovering)
+plot(mHovering_res)
+```
+
+The model seems good. 
+
+## Linear model
+
+Y variable = amount of time spent hovering during a trial. 
+
+For this model, exclusion of trials during which the fish did not hover.
+
+```{r}
+#| column: page
+mHovering2 <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering>0,])
+lm_results(mHovering2)
+calc_contrasts(mHovering2)
+```
+
+Effect of tank. Jar spent on average more time hovering than small (53 sec [CI 27, 80]), medium (58 sec [CI 28, 88]), and large (59 sec [CI 30, 89]). Barren spent on average 30 sec [CI 4, 56] more time hovering than large. 
+
+```{r}
+lm_diagnosis(mHovering2)
+```
+
+# Attempt transformation log(x + 1)
 
 ```{r}
 ggplot(data, aes(x = log(Hovering + 1)))+
@@ -533,45 +606,14 @@ ggplot(data, aes(x = log(Hovering + 50)))+
   geom_histogram(bins = 15, fill = grey(0.75), color="black")
 ggplot(data, aes(x = log(Hovering + 70)))+
   geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 103)))+
+ggplot(data, aes(x = log10(Hovering + 103)))+
   geom_histogram(bins = 10, fill = grey(0.75), color="black")
+
+
+mHovering <- lmer(log(Hovering+103)~Tank + Time + Filter + (1|Fish), data = data)
+check_model(mHovering, check = "normality")
+check_model(mHovering, check = "homogeneity")
 ```
-
-XXXX OK to do log(x + 103)????
-
-## Plot 
-
-```{r}
-#| warning: false
-plot_var_binary(data, "Hovering.bin")
-plot_var_binary(data, "Hovering.bin") + facet_wrap(~Fish)
-```
-
-## Generalised linear model 
-
-```{r}
-#| column: page
-mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
-
-Anova(mHovering)
-
-emmeans(mHovering, ~ Time, type = "response")
-emmeans(mHovering, ~ Filter, type = "response")
-```
-
-No effect of Tank, only an effect of Time and filter
-
-+ Time. Fish were less likely to hover in the afternoon.
-+ Filter. Fish were less likely to hover with a filter in their tank.
-
-## Diagnosis
-
-```{r}
-mHovering_res <- simulateResiduals(mHovering)
-plot(mHovering_res)
-```
-
-The model seems good.
 
 ## Hovering place
 

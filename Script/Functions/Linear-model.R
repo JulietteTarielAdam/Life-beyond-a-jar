@@ -10,9 +10,9 @@ lm_results <- function(model){
 # provide diagnostic assumptions of linear models
 lm_diagnosis <- function(model){
   print("check linearity and constant variance over fitted values")
-  check_model(model, check="linearity")
-  plot(residuals(model)~fitted(model)) 
-  abline(h=0)
+  print(check_model(model, check="linearity"))
+  print("check further constant variance over fitted values")
+  print(check_model(model, check="homogeneity"))
   print(paste0("Normality of ", attr(attr(attr(model,"frame"), "terms"),"varnames.fixed")[1]))
   qqnorm(residuals(model)) 
   qqline(residuals(model))

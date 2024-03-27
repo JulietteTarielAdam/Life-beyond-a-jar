@@ -4,6 +4,7 @@ library(tidyverse)
 ## for plots
 library(ggplot2) 
 library(ggpubr) # assemble multiple plots
+library(ggrepel)
 theme_set(theme_classic())
 library(RColorBrewer) # nice color palette
 ## for PCA analysis
