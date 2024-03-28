@@ -5,6 +5,7 @@ library(tidyverse)
 library(ggplot2) 
 library(ggpubr) # assemble multiple plots
 library(ggrepel)
+library(ggforce) # facet_wrap_paginate
 theme_set(theme_classic())
 library(RColorBrewer) # nice color palette
 ## for PCA analysis

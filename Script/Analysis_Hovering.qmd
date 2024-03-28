@@ -1,0 +1,90 @@
+---
+title: "Analysis Hovering"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| include: false
+# Run the scripts that load the data and that contains the functions to plot and do the linear models
+source("Script/Load-data.R")
+source("Script/Functions/Plots.R")
+source("Script/Functions/Linear-model.R")
+```
+
+# Poisson distribution
+
+Y variable = amount of time spent hovering during a trial, rounded to be an integer in seconds
+
+```{r}
+# poisson on all hovering data
+mHovering <- glmmTMB(round(Hovering,0) ~ Tank + Time + Filter + (1|Fish), data = data, family =poisson)
+mHovering_res <- simulateResiduals(mHovering)
+plot(mHovering_res)
+
+# zero inflated poisson on all hovering data
+mHovering <- glmmTMB(round(Hovering,0) ~ Tank + Time + Filter + (1|Fish), data = data, family =poisson,ziformula=~1)
+mHovering_res <- simulateResiduals(mHovering)
+plot(mHovering_res)
+
+# poisson on positive hovering data
+mHovering <- glmmTMB(round(Hovering,0) ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering >0,], family =poisson)
+mHovering_res <- simulateResiduals(mHovering)
+plot(mHovering_res)
+```
+
+Fit are not good
+
+# Attempt transformation log(Y + 1)
+
+Y variable = amount of time spent hovering during a trial. 
+
+Only considering positive hovering data Y > 0 
+
+```{r}
+ggplot(data, aes(x = log(Hovering + 1)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 5)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 10)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 15)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 20)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 25)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 30)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 50)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log(Hovering + 70)))+
+  geom_histogram(bins = 15, fill = grey(0.75), color="black")
+ggplot(data, aes(x = log10(Hovering + 103)))+
+  geom_histogram(bins = 10, fill = grey(0.75), color="black")
+
+
+mHovering <- lmer(log(Hovering+103)~Tank + Time + Filter + (1|Fish), data = data)
+check_model(mHovering, check = "normality")
+check_model(mHovering, check = "homogeneity")
+```
+
+We had to go log(y + 103) which is not a problem per se, because the value to add depends on the scale of the variable. Hovering varies between 0 and 600. 
+
+But anyway the fit is not good with increase of variance in residuals with fitted values.
+
+# Linear model
+
+Y variable = amount of time spent hovering during a trial. 
+
+Only considering positive hovering data Y > 0 
+
+```{r}
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering>0,])
+lm_diagnosis(mHovering)
+lm_results(mHovering)
+```
+
+Problem homogeneity of variance, increase of residual variance with fitted values
+

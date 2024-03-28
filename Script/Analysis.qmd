@@ -516,12 +516,14 @@ quantile(data$Hovering)
 hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
 ```
 
-Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened.
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened.So 204 trials where we could study the amount of time hovering in 204 trials. 
 
-We tried a glm with zero and zero-inflated poisson distribution, but the fit was not good.
+We tried:
++ glm with zero and zero-inflated poisson distribution, but the fit was not good.
++ a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
++ a linear model on the remaining 204 trials during which hovering happened. 
 
-We tried a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
-So we end up doing a glm binomial like Foraging or Steretotypic Swmimming. And then conduct a linear model on the remaining 204 trials during which hovering happened. 
+The analysis output of all these models are in the script Analysis Hovering
 
 ## Plot 
 
@@ -566,54 +568,7 @@ plot(mHovering_res)
 
 The model seems good. 
 
-## Linear model
 
-Y variable = amount of time spent hovering during a trial. 
-
-For this model, exclusion of trials during which the fish did not hover.
-
-```{r}
-#| column: page
-mHovering2 <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering>0,])
-lm_results(mHovering2)
-calc_contrasts(mHovering2)
-```
-
-Effect of tank. Jar spent on average more time hovering than small (53 sec [CI 27, 80]), medium (58 sec [CI 28, 88]), and large (59 sec [CI 30, 89]). Barren spent on average 30 sec [CI 4, 56] more time hovering than large. 
-
-```{r}
-lm_diagnosis(mHovering2)
-```
-
-# Attempt transformation log(x + 1)
-
-```{r}
-ggplot(data, aes(x = log(Hovering + 1)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 5)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 10)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 15)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 20)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 25)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 30)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 50)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log(Hovering + 70)))+
-  geom_histogram(bins = 15, fill = grey(0.75), color="black")
-ggplot(data, aes(x = log10(Hovering + 103)))+
-  geom_histogram(bins = 10, fill = grey(0.75), color="black")
-
-
-mHovering <- lmer(log(Hovering+103)~Tank + Time + Filter + (1|Fish), data = data)
-check_model(mHovering, check = "normality")
-check_model(mHovering, check = "homogeneity")
-```
 
 ## Hovering place
 
