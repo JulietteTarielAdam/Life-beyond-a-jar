@@ -1,13 +1,22 @@
+# palettes
+## behaviour
+palette.beh = c("#80DFFF", "#B3DE69", "#BEBADA" ,"#FB8072","#FCCDE5","#FDB462","#80B1D3", "#BC80BD","grey")
+palette.beh2 = c("#80DFFF", "#B3DE69", "#BEBADA" ,"#FB8072","#FCCDE5","#FDB462","#80B1D3", "#BC80BD")# without Out of View
+palette.beh3 = c("#80DFFF", "#B3DE69", "#BEBADA" ,"#FB8072","#FCCDE5","#FDB462","#80B1D3") # Without Sinking.floating
+## Fish
+palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
+
+
 # plot to see all behaviour types
-plot1 <- function(x_var, facet_var = NULL){
-  palette = c("#6ACB4F", "#80DFFF", "#13AADD","#0D7496" ,"#CE2A2A","#CDA2AB","#F07131", "#34B380","grey")
-  tf(data, grouping = c(x_var, facet_var), beh.cols.full, colMeans) %>% 
-    pivot_longer(cols = beh.cols.full , names_to ="type", values_to="time") %>% 
-    mutate(type = fct_relevel(type, beh.cols.full))  %>% 
+plot1 <- function(x_var, facet_var = NULL, main = data, beh_cols = beh.cols, palette = palette.beh){
+  tf(main, grouping = c(x_var, facet_var), beh_cols, colMeans) %>% 
+    pivot_longer(cols = beh_cols , names_to ="Behaviour", values_to="time") %>% 
+    mutate(type = fct_relevel(type, beh_cols))  %>% 
     ggplot(., aes_string(fill = "type", y = "time", x = x_var))+
     geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
     scale_fill_manual(values = palette)+
-    theme(legend.position="bottom")
+    theme(legend.position="bottom") +
+    ylab("Time spent doing the behaviour (sec)")
 }
 
 # plot distribution of the behavioural type
@@ -25,8 +34,6 @@ plot_var <- function(data, variable){
                  geom = "errorbar",colour = "red", width = 0.15)
 }
 
-# color palette fish
-palette <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 
 # plot one behavioural type by tank and by fish
 plot_var_fish <- function(data, variable){
@@ -38,8 +45,8 @@ plot_var_fish <- function(data, variable){
   
   ggplot(means_fish ,aes_string(y = variable, x = "Tank", color="Fish")) +
     geom_line(aes(group=Fish), lwd = 1.2) + 
-    guides(color=FALSE)+
-    scale_color_manual(values=palette)+
+    guides(color="none")+
+    scale_color_manual(values=palette.fish)+
     geom_line(data = means_tank, aes(group=1), colour = "black", lwd = 2, linetype = "dashed")+
     geom_label_repel(aes(label = label), na.rm = TRUE)
 }

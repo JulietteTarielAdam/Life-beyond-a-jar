@@ -22,6 +22,7 @@ library(car) # test fixed effects of the GLMMs
 library(DHARMa) # estimate residuals for the GLMMs to do the diagnosis of the model
 library(rptR) # estimate CI of repeatability
 library(performance) # for the function check_model
+library(nlme) # for the linear model of Hovering with weighted least squares
 
 # The loaded file is the Master.csv and not the excel Master.xlsx
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
@@ -33,7 +34,7 @@ levels(master$Filter)
 levels(master$Filter) <- c("No-filter", "Filter")
 
 # vectors indicating which columns are the behavioural variables
-beh.cols <- c("Resting", "Swimming", "Hovering", "Sinking.Floating", "Stereotypic.swimming", "Nest.building", "Foraging",  "Interation.with.surface")
+beh.cols <- c("Swimming","Resting", "Hovering", "Stereotypic.swimming", "Nest.building", "Foraging",  "Interation.with.surface", "Sinking.Floating")
 beh.cols.full <- c(beh.cols, "Out.of.view")
 
 # transforming the raw dataset into the dataset
@@ -65,14 +66,15 @@ tf <- function(data, grouping, beh.cols, fct){
 ## create the main file used for the analysis
 grouping <- c("Fish","Tank","Order","Time", "Filter")
 fct <- function(x) colSums(x, na.rm = TRUE)
-data <- tf(master, grouping, beh.cols.full, fct) 
+data <- tf(master, grouping, beh.cols, fct) 
+data.full <- tf(master, grouping, beh.cols.full, fct) 
 
 ## main file with up and down
 grouping <- c("Fish","Tank","Order","Time", "Up.Down", "Filter")
-dataUpDown <- tf(master, grouping, beh.cols.full, fct) 
-dataUpDown$Total <- rowSums(dataUpDown[,beh.cols.full])
+dataUpDown <- tf(master, grouping, beh.cols, fct) 
+dataUpDown$Total <- rowSums(dataUpDown[,beh.cols])
 dataUpDown <- dataUpDown %>% 
- dplyr::select(-beh.cols.full) %>% 
+ dplyr::select(-beh.cols) %>% 
  pivot_wider(values_from = Total, names_from = Up.Down) 
 dataUpDown[is.na(dataUpDown$down), "down"] <- 0 # NA for down column if the fish spent all the trial up. Replace NA by 0
 dataUpDown <- dataUpDown %>% 
@@ -84,9 +86,7 @@ dataUpDown <- dataUpDown %>%
          adj.down = round((down * 600) / total,0)) # adjusted time down by the fact that the trial was not perfectly 600 s
 
 # PCA
-pca <- PCA(data[,beh.cols], graph = FALSE, ncp=3, scale.unit = TRUE)
-data <- cbind(data, pca$ind$coord)
-names(data)[match(c("Dim.1", "Dim.2","Dim.3"), names(data))] <- c("pc1","pc2","pc3")
+pca <- PCA(data[,beh.cols], graph = FALSE, ncp=4, scale.unit = TRUE)
 
 # package renv to have a reproducible code by storing packages versions
 library(renv)

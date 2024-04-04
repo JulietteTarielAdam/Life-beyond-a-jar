@@ -1,8 +1,17 @@
 ---
 title: "Analysis Hovering"
-format: html
+date: "`r Sys.Date()`"
+author: "Juliette Tariel-Adam"
+format: 
+   html:
+    embed-resources: true
+    self-contained-math: true
 editor_options: 
   chunk_output_type: console
+knitr:
+  opts_chunk:
+    fig-align: center
+    out-width: "100%"
 ---
 
 ```{r}
@@ -12,6 +21,8 @@ source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
 ```
+
+::: {.panel-tabset}
 
 # Poisson distribution
 
@@ -87,4 +98,20 @@ lm_results(mHovering)
 ```
 
 Problem homogeneity of variance, increase of residual variance with fitted values
+
+# Linear model with power 
+
+In Weighted Least Squares (WLS, each observation is given a weight inversely proportional to its variance, helping to stabilize the variance across the fitted values.
+
+```{r}
+mHovering <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000))
+plot(mHovering, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+qqnorm(resid(mHovering, type = "pearson"))
+qqline(resid(mHovering, type = "pearson"))
+ranefPlot <- ranef(mHovering, level = 1)
+qqnorm(ranefPlot$`(Intercept)`)
+qqline(ranefPlot$`(Intercept)`)
+```
+
+::: 
 

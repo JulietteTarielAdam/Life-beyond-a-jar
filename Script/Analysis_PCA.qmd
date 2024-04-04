@@ -21,6 +21,7 @@ source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
 library(factoextra)
+library(viridis) # color palette
 ```
 
 I tried a PCA on:
@@ -63,6 +64,8 @@ plot(pcaS, choix = "var", axes = c(3,4))
 round(pcaS$var$cos2,1)
 # extent to which each variable contributes to the total variance explained by the first 4 components
 rowSums(pcaS$var$contrib)
+# extent to which each variable contributes to the total variance explained by the first 3 components
+rowSums(pcaS$var$contrib[,1:3])
 ```
 
 + 1st axis: Swimming, Foraging vs Resting
@@ -70,7 +73,7 @@ rowSums(pcaS$var$contrib)
 + 3rd axis: Mostly Nest.building vs Foraging
 + 4th axis: almost all variables, difficult to interpret
 
-As the 4th axis is difficult to interpret, we could keep 3 easy-interpretable components to explain 57% of the variance. 57% of the variance is not a lot... I thus decided to study behavioural types individually, but tell me if you prefer analyse the PCA components. The advantage of studying behavioural types individually is also to be able to interpret quantitatively the differences between treatments (like said before, 100 sec difference between tank X and tank Y).
+As the 4th axis is difficult to interpret, we could keep 3 easy-interpretable components to explain 57% of the variance. 57% of the variance is not a lot... We thus decided to study behavioural types individually, but tell me if you prefer analyse the PCA components. The advantage of studying behavioural types individually is also to be able to interpret quantitatively the differences between treatments (like said before, 100 sec difference between tank X and tank Y).
 
 Interaction with surface and Sinking.Floating are not very useful for the first 4 components, so not useful to explain the variability between trials (and this even though they are scaled = contribute to the PCA to the same extent that variables with higher initial variance).
 
