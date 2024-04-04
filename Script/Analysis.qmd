@@ -97,7 +97,7 @@ plot1("Filter")
 
 ## Order of tanks
 
-Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Is there an effect of the order of treatments? For instance, did the fish swim on average the same amount of time in Large when Large was the 2nd or 3rd tank they were in? Visual investigation using the order of tanks. Barren was the last tank for all fish. 
+Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Is there an effect of the order of treatments? For instance, were the fish more swimming during the   on average the same amount of time in Large when Large was the 2nd or 3rd tank they were in? Visual investigation using the order of tanks. Barren was the last tank for all fish. 
 
 ```{r}
 #| echo: false
@@ -311,6 +311,152 @@ From the graphs, we can see that fish use different places to rest, not only one
 
 :::
 
+# Hovering
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Hovering)
+table(data$Hovering==0)
+descdist(data$Hovering, boot = 1000, print = FALSE)
+quantile(data$Hovering)
+hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
+```
+
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened.So 204 trials where we could study the amount of time hovering in 204 trials. 
+
+We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occured during the trial, zero otherwise).
+
+To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried: 
++ glm with zero and zero-inflated poisson distribution, but the fit was not good.
++ a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
++ a linear model on the remaining 204 trials during which hovering happened. But the variance of residuals was increasing with the fitted values.
++  a linear model with weighted least squares to stabilise the variance accross the fitted values. The normality was not great but ANOVA are robust to the assumption of normality. It is the model we chose. 
+
+The analysis output of all these models are in the script Analysis Hovering.
+
+Here after only the results of the glm on the probability to hover and the results of the lmm on the amount of time spent hovering with weighted least squares (for trials with hovering time > 0).
+
+## Plot 
+
+```{r}
+#| warning: false
+# Effect of tank of the probability to hover during a trial?
+plot_var_binary(data, "Hovering.bin")
+plot_var_binary_fish(data, "Hovering.bin")
+
+# Among the trials where the fish hovers, effect of tank on the amount of time hovering?
+data %>% filter(Hovering >0) %>% 
+  plot_var(., "Hovering")
+data %>% filter(Hovering >0) %>% 
+  plot_var_fish(., "Hovering")
+```
+
+## Generalised linear model 
+
+Y variable = probability to hover during a trial
+
+```{r}
+#| column: page
+mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+Anova(mHovering)
+
+emmeans(mHovering, ~ Time, type = "response")
+emmeans(mHovering, ~ Filter, type = "response")
+```
+
+No effect of Tank on the probability to hover during a trial, only an effect of Time and filter
+
++ Time. Fish were less likely to hover in the afternoon.
++ Filter. Fish were less likely to hover with a filter in their tank.
+
+```{r}
+mHovering_res <- simulateResiduals(mHovering)
+plot(mHovering_res)
+```
+
+The model seems good. 
+
+## Linear model
+
+Y variable = amount of time spent hovering during a trial. Only trials with hovering time > 0
+
+Linear model with weighted least squares
+
+```{r}
+mHovering2 <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000))
+
+anova(mHovering2)
+calc_contrasts(mHovering2)
+emmeans(mHovering2, ~ Time) # estimated means of time spent Hovering depending on the time of the day 
+emmeans(mHovering2, ~ Filter)
+```
+
+Effect of Tank, Time and Filter.
+
++ Tank. Jar hovered significantly more time than Small, Medium and Large. Fish in Jar hovered 53 sec [CI 20, 85] more than Small (over a 600 sec trial), 53 sec [CI 20, 86] more than Medium, and 61 sec [CI 28, 93] more than Large. Fish in medium hovered more time than fish in Large. In addition, fish in Barren hovered significantly more time (22 sec [CI 9, 35]) than fish in Large.
++ Time. Fish hovered more time in the middle of the day.
++ Filter. Fish hovered less time with a filter in their tank.
+
+```{r}
+plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+qqnorm(resid(mHovering2, type = "pearson"))
+qqline(resid(mHovering2, type = "pearson"))
+ranefPlot <- ranef(mHovering2, level = 1)
+qqnorm(ranefPlot$`(Intercept)`)
+qqline(ranefPlot$`(Intercept)`)
+```
+
+The model seems good besides the normality. But as said earlier, linear models are robust to the normality assumption (= we can still draw true inference).
+
+## Hovering place
+
+Just a plot with where the fish hovers at the different places depending on the tank.
+
+```{r}
+#| column: page
+#| echo: false
+data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
+            c("Tank","Hovering.place","Fish","Filter","Time"), 
+            c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
+            function(x) colSums(x, na.rm = TRUE)) %>% 
+  mutate(Hovering.place = fct_drop(Hovering.place),
+         Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
+
+palette_HP <- c("#E3C9B8", "#89D7F5", "#AEE3B9","#AEE3B9","#6B4921", "#B8B8B8")
+
+(plotRP1 <- ggplot(data_HP, aes(y = Hovering, x = Hovering.place, fill = Hovering.place)) +
+  stat_summary(fun = mean,geom = "bar", size = 4)+
+  geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
+  scale_color_manual(values=palette_HP)+
+  facet_wrap(~Tank)+
+  guides(fill = FALSE)+
+  scale_fill_manual(values = palette_HP)+
+  ylab("Time spent resting (sec)")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)))
+
+
+ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    scale_fill_manual(values = palette_HP)+
+    ylab("Count of trials")
+
+ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
+    geom_bar(stat= "count",color=grey(0.4))+
+    scale_fill_manual(values = palette_HP)+
+    ylab("Count of trials")+
+  facet_wrap("Fish")+
+  theme(axis.text.x = element_text(angle=45,hjust=1),
+        legend.position="bottom")
+```
+
+Fish used different places for hovering in all tanks.
+
+:::
+
 # Foraging
 
 ::: {.panel-tabset}
@@ -516,152 +662,6 @@ data_SST2 %>%
 ```
 
 I don't think there are enough data to really say something about the number of repetitions. The number of repetitions seems pretty unique to a fish in a certain tank. I don't see ab obvious pattern depending on the tank. The interesting thing is that the stereotypic swimming seemed consistent in a tank for a fish (most or all trials of that day with stereotypic swimming). It is a pitty we couldn't calculate the repeatability of the binomial glm of Stereotypic Swimming because it would have been interesting. 
-
-:::
-
-# Hovering
-
-::: {.panel-tabset}
-
-## Distribution 
-
-```{r}
-hist1(data$Hovering)
-table(data$Hovering==0)
-descdist(data$Hovering, boot = 1000, print = FALSE)
-quantile(data$Hovering)
-hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
-```
-
-Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened.So 204 trials where we could study the amount of time hovering in 204 trials. 
-
-We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occured during the trial, zero otherwise).
-
-To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried: 
-+ glm with zero and zero-inflated poisson distribution, but the fit was not good.
-+ a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
-+ a linear model on the remaining 204 trials during which hovering happened. But the variance of residuals was increasing with the fitted values.
-+  a linear model with weighted least squares to stabilise the variance accross the fitted values. The normality was not great but ANOVA are robust to the assumption of normality. It is the model we chose. 
-
-The analysis output of all these models are in the script Analysis Hovering.
-
-Here after only the results of the glm on the probability to hover and the results of the lmm on the amount of time spent hovering with weighted least squares (for trials with hovering time > 0).
-
-## Plot 
-
-```{r}
-#| warning: false
-# Effect of tank of the probability to hover during a trial?
-plot_var_binary(data, "Hovering.bin")
-plot_var_binary_fish(data, "Hovering.bin")
-
-# Among the trials where the fish hovers, effect of tank on the amount of time hovering?
-data %>% filter(Hovering >0) %>% 
-  plot_var(., "Hovering")
-data %>% filter(Hovering >0) %>% 
-  plot_var_fish(., "Hovering")
-```
-
-## Generalised linear model 
-
-Y variable = probability to hover during a trial
-
-```{r}
-#| column: page
-mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
-
-Anova(mHovering)
-
-emmeans(mHovering, ~ Time, type = "response")
-emmeans(mHovering, ~ Filter, type = "response")
-```
-
-No effect of Tank on the probability to hover during a trial, only an effect of Time and filter
-
-+ Time. Fish were less likely to hover in the afternoon.
-+ Filter. Fish were less likely to hover with a filter in their tank.
-
-```{r}
-mHovering_res <- simulateResiduals(mHovering)
-plot(mHovering_res)
-```
-
-The model seems good. 
-
-## Linear model
-
-Y variable = amount of time spent hovering during a trial. Only trials with hovering time > 0
-
-Linear model with weighted least squares
-
-```{r}
-mHovering2 <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000))
-
-anova(mHovering2)
-calc_contrasts(mHovering2)
-emmeans(mHovering2, ~ Time) # estimated means of time spent Hovering depending on the time of the day 
-emmeans(mHovering2, ~ Filter)
-```
-
-Effect of Tank, Time and Filter.
-
-+ Tank. Jar hovered significantly more time than Small, Medium and Large. Fish in Jar hovered 53 sec [CI 20, 85] more than Small (over a 600 sec trial), 53 sec [CI 20, 86] more than Medium, and 61 sec [CI 28, 93] more than Large. Fish in medium hovered more time than fish in Large. In addition, fish in Barren hovered significantly more time (22 sec [CI 9, 35]) than fish in Large.
-+ Time. Fish hovered more time in the middle of the day.
-+ Filter. Fish hovered less time with a filter in their tank.
-
-```{r}
-plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
-qqnorm(resid(mHovering2, type = "pearson"))
-qqline(resid(mHovering2, type = "pearson"))
-ranefPlot <- ranef(mHovering2, level = 1)
-qqnorm(ranefPlot$`(Intercept)`)
-qqline(ranefPlot$`(Intercept)`)
-```
-
-The model seems good besides the normality. But as said earlier, linear models are robust to the normality assumption (= we can still draw true inference).
-
-## Hovering place
-
-Just a plot with where the fish hovers at the different places depending on the tank.
-
-```{r}
-#| column: page
-#| echo: false
-data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
-            c("Tank","Hovering.place","Fish","Filter","Time"), 
-            c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
-            function(x) colSums(x, na.rm = TRUE)) %>% 
-  mutate(Hovering.place = fct_drop(Hovering.place),
-         Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
-
-palette_HP <- c("#E3C9B8", "#89D7F5", "#AEE3B9","#AEE3B9","#6B4921", "#B8B8B8")
-
-(plotRP1 <- ggplot(data_HP, aes(y = Hovering, x = Hovering.place, fill = Hovering.place)) +
-  stat_summary(fun = mean,geom = "bar", size = 4)+
-  geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
-  scale_color_manual(values=palette_HP)+
-  facet_wrap(~Tank)+
-  guides(fill = FALSE)+
-  scale_fill_manual(values = palette_HP)+
-  ylab("Time spent resting (sec)")+
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)))
-
-
-ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
-    geom_bar(stat= "count",color=grey(0.4))+
-    scale_fill_manual(values = palette_HP)+
-    ylab("Count of trials")
-
-ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
-    geom_bar(stat= "count",color=grey(0.4))+
-    scale_fill_manual(values = palette_HP)+
-    ylab("Count of trials")+
-  facet_wrap("Fish")+
-  theme(axis.text.x = element_text(angle=45,hjust=1),
-        legend.position="bottom")
-```
-
-Fish used different places for hovering in all tanks.
 
 :::
 

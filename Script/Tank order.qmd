@@ -1,0 +1,29 @@
+---
+title: "Order of tanks"
+format: html
+---
+
+Order in which the fish experienced the tanks. Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Barren was the last tank = 5th tank for all fish. Is there an effect of the order of treatments? For instance, were fish more swimming on average during the 1st or 2nd tnak they went in?  
+
+A problem because all fish experienced Barren last, we cannot disentangle the effect of Barren from the effect of order. Maybe all the changes in behaviour in Barren were only because it was the last tank the fish went into. At least, we are only comparing Large and Barren -Large is not always the 4th tank- so we are not always comparing the same tank orders when comparing Large and Barren. 
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this 
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
