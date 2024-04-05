@@ -56,8 +56,8 @@ data %>% group_by(Fish, Time) %>%
   spread(Time,n) 
 
 # Sum of all behaviours per trial
-data.full$total <- rowSums(dplyr::select(data.full, beh.cols.full)) 
-sort(data.full$total) 
+data3$total <- rowSums(dplyr::select(data3, beh.cols3)) 
+sort(data3$total) 
 ```
 
 The sum of all behaviours is not exactly 600 sec (as Unsure is not in the dataset).
@@ -72,14 +72,14 @@ The mean value over multiple trials is plotted to only have one value per tank a
 #| echo: false
 #| warning: false
 # the plot1 function is in the script "Plots.R"
-plot1("Tank", main = data.full, beh_cols = beh.cols.full, palette = palette.beh)
+plot1("Tank", main = data3, beh_cols = beh.cols3, palette = palette.beh3)
 
-plot1("Tank","Fish", palette = palette.beh) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 1) + ggtitle("Per fish") 
-plot1("Tank","Fish", palette = palette.beh) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 2) + ggtitle("Per fish")
-plot1("Tank","Fish", palette = palette.beh) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 3) + ggtitle("Per fish")
-plot1("Tank","Fish", palette = palette.beh) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 4) + ggtitle("Per fish")
+plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 1) + ggtitle("Per fish") 
+plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 2) + ggtitle("Per fish")
+plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 3) + ggtitle("Per fish")
+plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 4) + ggtitle("Per fish")
 
-plot1("Time") + ggtitle("Per time")
+plot1("Time", main = data3, beh_cols = beh.cols3, palette = palette.beh3) + ggtitle("Per time")
 ```
 
 ## Filter
@@ -90,32 +90,12 @@ table(data$Tank, data$Filter)/4
 # nb of times each fish had a filter in their tank
 table(data$Fish, data$Filter)/4 
 
-plot1("Filter")
+plot1("Filter", main = data3, beh_cols = beh.cols3, palette = palette.beh3)
 ```
 
- There have never been a filter in Jar or Small. Some fish never had a filter in their tank. Filter needs to be included in all models as a control variable.
+There have never been a filter in Jar or Small. Some fish never had a filter in their tank. Filter needs to be included in all models as a control variable.
 
-## Order of tanks
-
-Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Is there an effect of the order of treatments? For instance, were the fish more swimming during the   on average the same amount of time in Large when Large was the 2nd or 3rd tank they were in? Visual investigation using the order of tanks. Barren was the last tank for all fish. 
-
-```{r}
-#| echo: false
-# the plot_order function is in the script "Plots.R"
-plot_order(data, "Swimming")
-plot_order(data, "Resting")
-plot_order(data, "Hovering")
-data %>% mutate(Foraging.bin = as.numeric(Foraging.bin)-1) %>% 
-plot_order(., "Foraging.bin")
-data %>% mutate(SS.bin = as.numeric(SS.bin)-1) %>% 
-plot_order(., "SS.bin")
-data %>% mutate(Nest.bin = as.numeric(Nest.bin)-1) %>% 
-plot_order(., "Nest.bin")
-```
-
-There was no consistent trend in the order of trials (for instance, fish did not perform more swimming at the 2nd trial whatever tank they were in).
-
-:::
+::: 
 
 # PCA
 
@@ -130,8 +110,8 @@ The PCA did not help reduce the number of variables to analyse (see Analysis_PCA
 Even if we did not use PCA for further analysis, the first 4 components are plotted below, which explained 71% of variance in the data, to show the important variables and the correlations between variables. 
 
 ```{r}
-(plotPCA1 <- plot(pca, choix = "var") + labs(title = NULL))
-(plotPCA2 <- plot(pca, choix = "var", axes = c(3,4)) + labs(title = NULL))
+plot(pca, choix = "var") + labs(title = NULL)
+plot(pca, choix = "var", axes = c(3,4)) + labs(title = NULL)
 ```
 
 ```{r}
@@ -143,7 +123,7 @@ rowSums(pca$var$contrib[,1:3])/3
 
 + The 1st PCA component was driven by Resting (cos2 = 0.8), Swimming (0.7) and Foraging (0.3). Swimming and Foraging opposite to Resting. This first component could be interpret as "activity". If a fish spent a lot of time swimming and foraging during a trial, it was very little resting. This first component explained 25% of the variance in the data (as a reminder, the data is the time spent performing the different types of behaviour). So 1 quarter of the variance is a matter of activity. Keep in mind for the rest of the analyses that these behavioural types are correlated. 
 
-+ The 2nd PCA component was driven by Hovering (cos2 = 0.5) and Stereotypic.swimming (0.5), and a bit by Interaction with surface (0.16). Hovering and Interacting.with.Surface opposite to Stereotypic.swimming. If the fish spent a lot of time hovering (and interacting with the surface), it was very little stereotypic swimming. This is interesting in my opinion.
++ The 2nd PCA component was driven by Hovering (cos2 = 0.5) and Stereotypic.swimming (0.5), and a bit by Interaction with surface (0.16). Hovering and Interacting.with.Surface opposite to Stereotypic.swimming. If the fish spent a lot of time hovering (and interacting with the surface), it was very little stereotypic swimming.
 
 + The 3rd PCA component was driven mainly by Nest building (cos2 = 0.6), and a bit by Foraging (0.16), Resting (0.14) and Stereotypic Swimming (0.13). Foraging and Resting opposite to Nest building and Stereotypic Swimming. If a fish spent time foraging and resting in a trial, it was little nest building and stereotypic swimming. This makes sense, it a fish is building a nest,it is an important task and needs to be finished, so it is not scattering its time with other activities. The apparent correlation between nest building and stereotypic swimming could be due to Jar where fish in this tank rarely engaged in nest building or stereotypic swimming. 
 
@@ -165,12 +145,12 @@ hist1(data$Swimming)
 
 The first plot is to see the trend by tank. Big red dots is for the overall mean  by tank. Small black points are raw data = swimming time of each trial. 
 
-The second plot is to see the trend by fish and by tank.The dashed black line is means by tank. The other lines are the means for each fish by tank. 
+The second plot is to see the trend by fish and by tank. The dashed black line is means by tank. The other lines are the means for each fish by tank. 
 
 ```{r}
 #| warning: false
-(plotSwimming1 <- plot_var(data, "Swimming"))
-(plotSwimming2 <- plot_var_fish(data, "Swimming"))
+plot_var(data, "Swimming")
+plot_var_fish(data, "Swimming")
 ```
 
 ## Linear model 
@@ -193,14 +173,14 @@ Effect of Tank, Time and Filter!
 ## Between-fish diff
 
 ```{r}
-# first time if running the script
+# Uncomment the 2 lines below if running the script for the first time
 ## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 ## save(rpt.swimming, file = "Script/Repeatability rptR output/rpt.swimming")
 base::load("Script/Repeatability rptR output/rpt.swimming")
 summary(rpt.swimming)
 ```
 
-The repeatability is quite low (0.2).
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2). 
 
 
 ## Diagnosis
@@ -230,8 +210,8 @@ Only 11 trials where the fish did not rest at all.
 
 ```{r}
 #| warning: false
-(plotResting1 <- plot_var(data, "Resting"))
-(plotResting2 <- plot_var_fish(data, "Resting"))
+plot_var(data, "Resting")
+plot_var_fish(data, "Resting")
 ```
 
 ## Linear model 
@@ -252,14 +232,14 @@ Effect of Tank and Time.
 ## Between-fish diff
 
 ```{r}
-# first time if running the script
+# Uncomment the 2 lines below if running the script for the first time
 ## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 ## save(rpt.resting, file = "Script/Repeatability rptR output/rpt.resting")
 base::load("Script/Repeatability rptR output/rpt.resting")
 summary(rpt.resting)
 ```
 
-The repeatability is OK 0.37
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is OK 0.37
 
 ## Diagnosis
 
@@ -287,11 +267,11 @@ data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),],
 palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#84B05D","#84B05D", "#6B4921","#6B4921", "#B8B8B8")
 
 (plotRP1 <- ggplot(data_RP, aes(y = Resting, x = Resting.place,fill = Resting.place)) +
-  stat_summary(fun = mean,geom = "bar", size = 4)+
+  stat_summary(fun = mean,geom = "bar", linewidth = 4)+
   geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
   scale_color_manual(values=palette_RP)+
   facet_wrap(~Tank)+
-  guides(fill = FALSE)+
+  guides(fill = "none")+
   scale_fill_manual(values = palette_RP)+
   ylab("Time spent resting (sec)")+
     theme(axis.text.x = element_text(angle = 45, hjust = 1)))
@@ -862,6 +842,8 @@ The model seems good.
 
 :::
 
+:::
+
 
 # Figures for the paper
 
@@ -876,20 +858,17 @@ ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
 
 ## All behaviours
 ```{r}
-# Tank
-beh.cols2 <- beh.cols[-which(beh.cols=="Sinking.Floating")] # remove Sinking.Floating
-
-(plot.tank <- plot1("Tank", beh_cols = beh.cols2, palette = palette.beh2) + 
+(plot.tank <- plot1("Tank") + 
   ylab("Time spent doing the behaviour (sec)")+
   theme(legend.position="right") +
   guides(fill=guide_legend(title="Behaviour")))
 
-(plot.time <- plot1("Time", beh_cols = beh.cols2, palette = palette.beh2) + 
+(plot.time <- plot1("Time") + 
   ylab("Time spent doing the behaviour (sec)")+
   theme(legend.position="right") +
   guides(fill=guide_legend(title="Behaviour")))
 
-(plot.filter <- plot1("Filter", main = data, beh_cols = beh.cols2, palette = palette.beh2) + 
+(plot.filter <- plot1("Filter") + 
   ylab("Time spent doing the behaviour (sec)")+
   theme(legend.position="right") +
   guides(fill=guide_legend(title="Behaviour")))
@@ -898,7 +877,7 @@ beh.cols2 <- beh.cols[-which(beh.cols=="Sinking.Floating")] # remove Sinking.Flo
 ## Time spent
 Resting, hovering, swimming
 ```{r}
-(plotSwimming <- plot_var(data, "Swimming") + ylab("Time spent swimming (sec)"))
+#(plotSwimming <- plot_var(data, "Swimming") + ylab("Time spent swimming (sec)"))
 
 ```
 
@@ -931,4 +910,3 @@ sessionInfo()
 ```
 
 
-:::

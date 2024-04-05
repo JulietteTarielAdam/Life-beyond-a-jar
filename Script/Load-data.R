@@ -28,14 +28,19 @@ library(nlme) # for the linear model of Hovering with weighted least squares
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
 
 # change order or name of factor levels
+master$Order <- factor(master$Order)
 master$Tank <- factor(master$Tank, levels = c("Jar", "Small", "Medium", "Large", "Barren")) 
 master$Time <- factor(master$Time, levels = c("7:00 AM", "10:00 AM", "2:00 PM", "6:00 PM"))
 levels(master$Filter)
 levels(master$Filter) <- c("No-filter", "Filter")
 
 # vectors indicating which columns are the behavioural variables
-beh.cols <- c("Swimming","Resting", "Hovering", "Stereotypic.swimming", "Nest.building", "Foraging",  "Interation.with.surface", "Sinking.Floating")
-beh.cols.full <- c(beh.cols, "Out.of.view")
+## Final behaviours studied
+beh.cols <- c("Swimming","Resting", "Hovering", "Stereotypic.swimming", "Nest.building", "Foraging",  "Interation.with.surface")
+## With Sinking.Floating
+beh.cols2 <- c(beh.cols, "Sinking.Floating")
+## With Out.Of.View
+beh.cols3 <- c(beh.cols2, "Out.of.view")
 
 # transforming the raw dataset into the dataset
 # each row of the raw dataset is a time spent by a fish doing a certain behavioural type 
@@ -66,8 +71,9 @@ tf <- function(data, grouping, beh.cols, fct){
 ## create the main file used for the analysis
 grouping <- c("Fish","Tank","Order","Time", "Filter")
 fct <- function(x) colSums(x, na.rm = TRUE)
-data <- tf(master, grouping, beh.cols, fct) 
-data.full <- tf(master, grouping, beh.cols.full, fct) 
+data3 <- tf(master, grouping, beh.cols3, fct) 
+data2 <- subset(data3, select = -Out.of.view) # Without Out.Of.View
+data <-  subset(data2, select = -Sinking.Floating) # Without Sinking.Floating
 
 ## main file with up and down
 grouping <- c("Fish","Tank","Order","Time", "Up.Down", "Filter")
@@ -86,7 +92,7 @@ dataUpDown <- dataUpDown %>%
          adj.down = round((down * 600) / total,0)) # adjusted time down by the fact that the trial was not perfectly 600 s
 
 # PCA
-pca <- PCA(data[,beh.cols], graph = FALSE, ncp=4, scale.unit = TRUE)
+pca <- PCA(data2[,beh.cols2], graph = FALSE, ncp=4, scale.unit = TRUE)
 
 # package renv to have a reproducible code by storing packages versions
 library(renv)
@@ -98,4 +104,3 @@ data$SS.bin <- factor(ifelse(data$Stereotypic.swimming != 0, "Yes", "No"))
 data$Hovering.bin <- factor(ifelse(data$Hovering != 0, "Yes", "No"))
 data$Interacting.bin <- factor(ifelse(data$Interation.with.surface != 0, "Yes", "No"))
 data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
-data$SF.bin <- factor(ifelse(data$Sinking.Floating != 0, "Yes", "No"))

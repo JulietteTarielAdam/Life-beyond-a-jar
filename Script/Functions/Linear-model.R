@@ -9,14 +9,12 @@ lm_results <- function(model){
 
 # provide diagnostic assumptions of linear models
 lm_diagnosis <- function(model){
-  print("check linearity and constant variance over fitted values")
-  print(check_model(model, check="linearity"))
-  print("check further constant variance over fitted values")
+  print("check constant variance over fitted values")
   print(check_model(model, check="homogeneity"))
   print(paste0("Normality of ", attr(attr(attr(model,"frame"), "terms"),"varnames.fixed")[1]))
   qqnorm(residuals(model)) 
   qqline(residuals(model))
-  print("normality random residuals")
+  print("Normality random residuals")
   text(qqnorm(ranef(model)$Fish[,1]), labels=rownames(ranef(model)$Fish), cex= 0.7, pos = 1)
   qqline(ranef(model)$Fish[,1])
   check_model(model, check="pp_check")

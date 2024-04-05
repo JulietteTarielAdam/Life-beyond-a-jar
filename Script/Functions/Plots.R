@@ -1,8 +1,11 @@
 # palettes
 ## behaviour
-palette.beh = c("#80DFFF", "#B3DE69", "#BEBADA" ,"#FB8072","#FCCDE5","#FDB462","#80B1D3", "#BC80BD","grey")
-palette.beh2 = c("#80DFFF", "#B3DE69", "#BEBADA" ,"#FB8072","#FCCDE5","#FDB462","#80B1D3", "#BC80BD")# without Out of View
-palette.beh3 = c("#80DFFF", "#B3DE69", "#BEBADA" ,"#FB8072","#FCCDE5","#FDB462","#80B1D3") # Without Sinking.floating
+palette.beh = c("#80DFFF", "#B3DE69", "#BEBADA" ,"#FB8072","#FCCDE5","#FDB462","#80B1D3") 
+### With Sinking.floating
+palette.beh2 = c(palette.beh, "#BC80BD")
+### with Out of View
+palette.beh3 = c(palette.beh2,"grey") 
+
 ## Fish
 palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 
@@ -11,8 +14,8 @@ palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 plot1 <- function(x_var, facet_var = NULL, main = data, beh_cols = beh.cols, palette = palette.beh){
   tf(main, grouping = c(x_var, facet_var), beh_cols, colMeans) %>% 
     pivot_longer(cols = beh_cols , names_to ="Behaviour", values_to="time") %>% 
-    mutate(type = fct_relevel(type, beh_cols))  %>% 
-    ggplot(., aes_string(fill = "type", y = "time", x = x_var))+
+    mutate(Behaviour = fct_relevel(Behaviour, beh_cols))  %>% 
+    ggplot(., aes_string(fill = "Behaviour", y = "time", x = x_var))+
     geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
     scale_fill_manual(values = palette)+
     theme(legend.position="bottom") +
