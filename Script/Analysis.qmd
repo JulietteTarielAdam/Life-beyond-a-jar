@@ -266,25 +266,15 @@ data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),],
 
 palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#84B05D","#84B05D", "#6B4921","#6B4921", "#B8B8B8")
 
-(plotRP1 <- ggplot(data_RP, aes(y = Resting, x = Resting.place,fill = Resting.place)) +
-  stat_summary(fun = mean,geom = "bar", linewidth = 4)+
-  geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
-  scale_color_manual(values=palette_RP)+
-  facet_wrap(~Tank)+
-  guides(fill = "none")+
-  scale_fill_manual(values = palette_RP)+
-  ylab("Time spent resting (sec)")+
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)))
+data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
+  ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity")+
+  scale_fill_manual(values=palette_RP)
 
-(plotRP2 <- ggplot(data_RP, aes(y = Resting, x = Resting.place,fill = Resting.place)) +
-  stat_summary(fun = mean,geom = "bar", size = 4)+
-  geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
-  scale_color_manual(values=palette_RP)+
-  facet_wrap(~Fish)+
-  guides(fill = FALSE)+
-  scale_fill_manual(values = palette_RP)+
-  ylab("Time spent resting (sec)")+
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)))
+data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
+  ggplot(., aes(y = Resting, x = Fish,fill = Resting.place))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity")+
+  scale_fill_manual(values=palette_RP)
 ```
 
 From the graphs, we can see that fish use different places to rest, not only one type. They use all the different places available. It does not seem that there is a preferred resting place. 
