@@ -26,11 +26,26 @@ data %>% filter(Tank != "Barren") %>%
   ggtitle("Tank order")
 ```
 
-Comparison of all models (besides Hovering and Interaction with surface) with or without tank order in the model, excluding Barren data
+Treat tank order as a continuous or categorical variable? 
 
 ```{r}
-# with tank order
-model <- lmer(Swimming ~ Tank + Time + Filter + factor(Order) + (1|Fish), data = filter(data, Tank !="Barren"))
+plot(data$Swimming ~ factor(data$Order))
+ggplot(data, aes(y = Swimming, x = Order)) + geom_point() + geom_smooth()
+```
+
+Considering the plot of the relationship between Swimming and Tank order, tank order is better as a categorical variable.
+
+```{r}
+# with tank order as categorical variable
+mOrder.fac <- lmer(Swimming ~ Tank + Time + Filter + factor(Order) + (1|Fish), data = filter(data, Tank !="Barren"))
+# with tank order as continuous variable
+mOrder.con <-  lmer(Swimming ~ Tank + Time + Filter + Order + (1|Fish), data = filter(data, Tank !="Barren"))
+# with tank order and squared tank order
+mOrder.con2 <-  lmer(Swimming ~ Tank + Time + Filter + Order + I(Order^2) + (1|Fish), data = filter(data, Tank !="Barren"))
+
+AIC(mOrder.fac,mOrder.con, mOrder.con2)
+
+
 anova(model, ddf = "Kenward-Roger", type = 2) 
 emmeans(model, ~ Tank) %>% 
   contrast(.,
@@ -45,6 +60,8 @@ emmeans(model, ~ Tank) %>%
 lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = filter(data, Tank !="Barren")) %>% 
   anova(., ddf = "Kenward-Roger", type = 2)
 ```
+
+Comparison of all models (besides Hovering and Interaction with surface) with or without tank order in the model, excluding Barren data
 
 Significant effect of tank order
 Still an effect of tank

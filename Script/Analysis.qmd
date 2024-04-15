@@ -264,17 +264,19 @@ data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),],
   mutate(Resting.place = fct_drop(Resting.place),
          Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
 
-palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#84B05D","#84B05D", "#6B4921","#6B4921", "#B8B8B8")
+palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#84A01A","#84B05D", "#6B4940","#6B4921", "#B8B8B8")
 
 data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
-    geom_bar(position = position_fill(reverse = TRUE), stat = "identity")+
-  scale_fill_manual(values=palette_RP)
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_RP)+
+  guides(fill = guide_legend(reverse = TRUE))
 
 data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Fish,fill = Resting.place))+
-    geom_bar(position = position_fill(reverse = TRUE), stat = "identity")+
-  scale_fill_manual(values=palette_RP)
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_RP)+
+  guides(fill = guide_legend(reverse = TRUE))
 ```
 
 From the graphs, we can see that fish use different places to rest, not only one type. They use all the different places available. It does not seem that there is a preferred resting place. 
@@ -295,34 +297,28 @@ quantile(data$Hovering)
 hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
 ```
 
-Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened.So 204 trials where we could study the amount of time hovering in 204 trials. 
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened. So 204 trials where we could study the amount of time hovering in 204 trials. 
 
-We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occured during the trial, zero otherwise).
+We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occurred during the trial, zero otherwise).
 
-To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried: 
-+ glm with zero and zero-inflated poisson distribution, but the fit was not good.
-+ a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
-+ a linear model on the remaining 204 trials during which hovering happened. But the variance of residuals was increasing with the fitted values.
-+  a linear model with weighted least squares to stabilise the variance accross the fitted values. The normality was not great but ANOVA are robust to the assumption of normality. It is the model we chose. 
-
-The analysis output of all these models are in the script Analysis Hovering.
-
-Here after only the results of the glm on the probability to hover and the results of the lmm on the amount of time spent hovering with weighted least squares (for trials with hovering time > 0).
+To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried different models described in "Analysis_Hovering". The best model was a linear mixed model on the amount of time spent hovering with weighted least squares.
 
 ## Plot 
 
 ```{r}
 #| warning: false
-# Effect of tank of the probability to hover during a trial?
+# Effect of tank of the probability to hover during a trial
 plot_var_binary(data, "Hovering.bin")
 plot_var_binary_fish(data, "Hovering.bin")
 
-# Among the trials where the fish hovers, effect of tank on the amount of time hovering?
+# Among the trials where the fish hovers, effect of tank on the amount of time hovering
 data %>% filter(Hovering >0) %>% 
   plot_var(., "Hovering")
 data %>% filter(Hovering >0) %>% 
   plot_var_fish(., "Hovering")
 ```
+
+All fish besides Goblin hovered more in Jar compared to Small.
 
 ## Generalised linear model 
 
@@ -380,7 +376,7 @@ qqnorm(ranefPlot$`(Intercept)`)
 qqline(ranefPlot$`(Intercept)`)
 ```
 
-The model seems good besides the normality. But as said earlier, linear models are robust to the normality assumption (= we can still draw true inference).
+The model seems good besides the normality. But linear models are robust to the normality assumption (= we can still draw true inference).
 
 ## Hovering place
 
@@ -396,7 +392,25 @@ data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),],
   mutate(Hovering.place = fct_drop(Hovering.place),
          Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
 
-palette_HP <- c("#E3C9B8", "#89D7F5", "#AEE3B9","#AEE3B9","#6B4921", "#B8B8B8")
+palette_HP <- c("#E3C9B8", "#89D7F5", "#AED3A1","#AEE3B9","#6B4921")
+
+data_HP %>% 
+  filter(!is.na(Hovering.place)) %>% 
+  group_by(Tank, Hovering.place) %>% 
+  summarise(Hovering = mean(Hovering)) %>% 
+  ggplot(., aes(y = Hovering, x = Tank,fill = Hovering.place))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_HP)+
+  guides(fill = guide_legend(reverse = TRUE))
+
+data_HP %>% 
+  filter(!is.na(Hovering.place)) %>% 
+  group_by(Fish, Hovering.place) %>% 
+  summarise(Hovering = mean(Hovering)) %>% 
+  ggplot(., aes(y = Hovering, x = Fish,fill = Hovering.place))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_HP)+
+  guides(fill = guide_legend(reverse = TRUE))
 
 (plotRP1 <- ggplot(data_HP, aes(y = Hovering, x = Hovering.place, fill = Hovering.place)) +
   stat_summary(fun = mean,geom = "bar", size = 4)+
@@ -439,18 +453,18 @@ table(data$Foraging==0)
 descdist(data$Foraging, boot = 1000, print = FALSE)
 ```
 
-The data are clearly not following a normal distribution. It seems that they could possibly follow a beta distribution but I thought beta distributions were when the variable is between 0 and 1. Foraging has thus been analysed as a binary variable: 1 if fish spent time foraging during this trial, 0 otherwise.
+The data are clearly not following a normal distribution. It seems that a beta distribution could suit but foraging is not a continuous variable ranging from 0 to 1. Foraging has thus been analysed as a binary variable: 1 if fish spent time foraging during this trial, 0 otherwise.
 
 There were 168 trials (out of 252) during which no foraging happened.
 
 ## Plot 
 
-The plots are in count of trials. Green represents trials in which the fish foraged, gray in which the fish did not forage. 
+The plots are in percentage of trials during which the fish foraged over the total number of trials.
 
 ```{r}
 #| warning: false
-(plotForaging1 <- plot_var_binary(data, "Foraging.bin"))
-(plotForaging2 <- plot_var_binary_fish(data, "Foraging.bin"))
+plot_var_binary(data, "Foraging.bin")
+plot_var_binary_fish(data, "Foraging.bin")
 ```
 
 ## Generalised linear model 
@@ -562,7 +576,7 @@ mSS0 <- glm(SS.bin ~ Tank + Time + Filter, data = data, family =binomial)
 lrtest(mSS0, mSS)
 ```
 
-Error when calculating the repeatability with rptR, item Foraging. 
+Error when calculating the repeatability with rptR, idem Foraging. 
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of stereotypic swimming. 
 
@@ -609,9 +623,6 @@ ggplot(data_SST, aes(fill = Stereotypic.swimming.type2, x = Tank))+
 ```
 
 It seems that there are not differences between tanks. Just circles seem specific to larger tanks (Medium/Large/Barren).
-
-I did not plot the place where the stereotypic swimming happens. Tell me if you need it. 
-
 
 ## Stereotypic Swimming repetitions
 

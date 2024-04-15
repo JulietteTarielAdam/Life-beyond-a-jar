@@ -28,7 +28,6 @@ library(nlme) # for the linear model of Hovering with weighted least squares
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
 
 # change order or name of factor levels
-master$Order <- factor(master$Order)
 master$Tank <- factor(master$Tank, levels = c("Jar", "Small", "Medium", "Large", "Barren")) 
 master$Time <- factor(master$Time, levels = c("7:00 AM", "10:00 AM", "2:00 PM", "6:00 PM"))
 levels(master$Filter)

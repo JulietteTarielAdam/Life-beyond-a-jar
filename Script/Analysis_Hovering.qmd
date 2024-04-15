@@ -22,6 +22,12 @@ source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
 ```
 
+To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried:
++ glm with zero and zero-inflated poisson distribution, but the fit was not good.
++ a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
++ a linear model on the remaining 204 trials during which hovering happened. But the variance of residuals was increasing with the fitted values.
++  a linear model with weighted least squares to stabilise the variance accross the fitted values. The normality was not great but ANOVA are robust to the assumption of normality. It is the model we chose. 
+
 ::: {.panel-tabset}
 
 # Poisson distribution
