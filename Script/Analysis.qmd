@@ -402,7 +402,7 @@ data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),],
   mutate(Hovering.place = fct_drop(Hovering.place),
          Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
 
-palette_HP <- c("#E3C9B8", "#89D7F5", "#AED3A1","#AEE3B9","#6B4921")
+palette_HP <- c("#E3C9B8", "#89D7F5", "#BFEBE5", "#cae9eb","#6B4921")
 
 data_HP %>% 
   filter(!is.na(Hovering.place)) %>% 
@@ -421,30 +421,6 @@ data_HP %>%
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
   scale_fill_manual(values=palette_HP)+
   guides(fill = guide_legend(reverse = TRUE))
-
-(plotRP1 <- ggplot(data_HP, aes(y = Hovering, x = Hovering.place, fill = Hovering.place)) +
-  stat_summary(fun = mean,geom = "bar", size = 4)+
-  geom_jitter(alpha = .5, width = 0.05, height=0, color = grey(0.25)) +
-  scale_color_manual(values=palette_HP)+
-  facet_wrap(~Tank)+
-  guides(fill = FALSE)+
-  scale_fill_manual(values = palette_HP)+
-  ylab("Time spent resting (sec)")+
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)))
-
-
-ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
-    geom_bar(stat= "count",color=grey(0.4))+
-    scale_fill_manual(values = palette_HP)+
-    ylab("Count of trials")
-
-ggplot(data_HP, aes(fill = Hovering.place, x = Tank))+
-    geom_bar(stat= "count",color=grey(0.4))+
-    scale_fill_manual(values = palette_HP)+
-    ylab("Count of trials")+
-  facet_wrap("Fish")+
-  theme(axis.text.x = element_text(angle=45,hjust=1),
-        legend.position="bottom")
 ```
 
 Fish used different places for hovering in all tanks.
