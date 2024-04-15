@@ -102,9 +102,9 @@
     },
     "Matrix": {
       "Package": "Matrix",
-      "Version": "1.6-1",
+      "Version": "1.6-5",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "grDevices",
@@ -115,7 +115,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "cb6855ac711958ca734b75e631b2035d"
+      "Hash": "8c7115cd3a0e048bda2a7cd110549f7a"
     },
     "MatrixModels": {
       "Package": "MatrixModels",
@@ -163,17 +163,16 @@
     },
     "RcppEigen": {
       "Package": "RcppEigen",
-      "Version": "0.3.3.9.3",
+      "Version": "0.3.4.0.0",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
-        "Matrix",
         "R",
         "Rcpp",
         "stats",
         "utils"
       ],
-      "Hash": "1e035db628cefb315c571202d70202fe"
+      "Hash": "df49e3306f232ec28f1604e36a202847"
     },
     "Rdpack": {
       "Package": "Rdpack",
@@ -205,9 +204,9 @@
     },
     "TMB": {
       "Package": "TMB",
-      "Version": "1.9.6",
+      "Version": "1.9.11",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "Matrix",
         "R",
@@ -217,7 +216,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "b062cb79db56803311ea22b90ed6f57a"
+      "Hash": "14d82c02c5dc0330a0f3f3d717d92a19"
     },
     "abind": {
       "Package": "abind",
@@ -1509,9 +1508,9 @@
     },
     "lme4": {
       "Package": "lme4",
-      "Version": "1.1-34",
+      "Version": "1.1-35.2",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "MASS",
         "Matrix",
@@ -1531,7 +1530,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "73ed88b282d27d4cf3d89b744aa21217"
+      "Hash": "c255dd80a1771f41321db15041feed11"
     },
     "lmerTest": {
       "Package": "lmerTest",

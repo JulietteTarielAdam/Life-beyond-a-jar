@@ -24,7 +24,7 @@ library(factoextra)
 library(viridis) # color palette
 ```
 
-I tried a PCA on:
+We tried a PCA on:
 
 + scaled variables.
   * All variables are divided by their standard deviation and have therefore the same variance / standard deviation of 1. It is the standard PCA.
@@ -33,7 +33,7 @@ I tried a PCA on:
   * PCA using non-scaled variables can quantitatively interpret the differences.
   * But it gives more importance to behavioural variables that have the more variance. And I don't see why we should give more importance to certain variables or not. A difference of 10 sec in stereotypic swimming might be as relevant as a difference of 50 s swimming.
 
-So we decide to do PCA using scaled variables because of this last point: we don't want to give more importance to behaviours with the most variance.(And the circle of correlations looks shit with non-scaled variables, but it is not an argument haha)
+So we decide to do PCA using scaled variables because of this last point: we don't want to give more importance to behaviours with the most variance. (And also the circle of correlations looks worst with non-scaled variables = less easy to interpret.As our behaviour variables were very different in variance, the length of the arrows in the circle of correlations are very different).
 
 Also, I was concerned of running PCA on repeated measures, but apparently it is not a big deal.
 
@@ -53,7 +53,7 @@ Rules to keep an component:
 + Cumulative percentage of variance > 95% 
 + component before the drop
 
-Depending on the rules, we should keep between 4 (eigen value > 1) or 7 components (cumulative percentage of variance > 95%). Keeping 7 components is pointless! I keep only 4 components, explaining 70$ of total variance. 
+Depending on the rules, we should keep between 4 (eigen value > 1) or 7 components (cumulative percentage of variance > 95%). Keeping 7 components is pointless! We keep only 4 components, explaining 70$ of total variance. 
 
 ```{r}
 pcaS <- PCA(data[,beh.cols], ncp=4,graph = FALSE, scale.unit = TRUE)
@@ -73,9 +73,9 @@ rowSums(pcaS$var$contrib[,1:3])
 + 3rd axis: Mostly Nest.building vs Foraging
 + 4th axis: almost all variables, difficult to interpret
 
-As the 4th axis is difficult to interpret, we could keep 3 easy-interpretable components to explain 57% of the variance. 57% of the variance is not a lot... We thus decided to study behavioural types individually, but tell me if you prefer analyse the PCA components. The advantage of studying behavioural types individually is also to be able to interpret quantitatively the differences between treatments (like said before, 100 sec difference between tank X and tank Y).
+As the 4th axis is difficult to interpret, we could keep 3 easy-interpretable components to explain 57% of the variance. 57% of the variance is not a lot... We thus decided to study behaviours individually. The advantage of studying behaviours individually is also to be able to interpret quantitatively the differences between treatments (like said before, 100 sec difference between tank X and tank Y).
 
-Interaction with surface and Sinking.Floating are not very useful for the first 4 components, so not useful to explain the variability between trials (and this even though they are scaled = contribute to the PCA to the same extent that variables with higher initial variance).
+Sinking.Floating (and to a lesser extent Interaction.with.surface) is not very useful for the first 4 components, so not useful to explain the variability between trials (and this even though they are scaled = contribute to the PCA to the same extent that variables with higher initial variance).
 
 ```{r}
 fviz_pca_biplot(pcaS, geom.ind = "point", col.ind = data$Tank, col.var="black",
@@ -86,7 +86,7 @@ fviz_pca_biplot(pcaS, geom.ind = "point", col.ind = data$Fish, col.var="black",
 
 No clear distinction between the different tanks or fish. Common in behaviour ecology to not have clear groups.
 
-# Non scaled variables
+# Non-scaled variables
 
 Resting and Swimming have the highest variance (see below) and they will therefore contribute more to the PCA using non-scaled variables. Sinking.Floating, Foraging and Hovering have the lowest variances.
 

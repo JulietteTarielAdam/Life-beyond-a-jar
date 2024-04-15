@@ -1,8 +1,17 @@
 ---
 title: "Order of tanks"
-format: html
+date: "`r Sys.Date()`"
+author: "Juliette Tariel-Adam"
+format: 
+   html:
+    embed-resources: true
+    self-contained-math: true
 editor_options: 
   chunk_output_type: console
+knitr:
+  opts_chunk:
+    fig-align: center
+    out-width: "100%"
 ---
 
 ```{r}

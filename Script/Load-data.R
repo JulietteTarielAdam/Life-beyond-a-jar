@@ -18,7 +18,6 @@ library(emmeans) # estimate posthoc contrasts
 library(fitdistrplus) # find potential distributions other than normal distribution
 library(glmmTMB) # fit the GLMMs
 library(lmtest) # lrtest() to do LRT with glmmTMB package
-library(car) # test fixed effects of the GLMMs
 library(DHARMa) # estimate residuals for the GLMMs to do the diagnosis of the model
 library(rptR) # estimate CI of repeatability
 library(performance) # for the function check_model

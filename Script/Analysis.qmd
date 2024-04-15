@@ -22,11 +22,11 @@ source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
 ```
 
-The script contains the code of data transformation, analysis and graphs for the article "XXXXXX". It is in two versions: the raw R script in qmd format and the code output in html format. 
+The script contains the code of data transformation, analysis and graphs for the article "Life Beyond A Jar: Effects of Tank Size and Enrichment on the Behaviour and Welfare of Siamese Fighting Fishes" by XXauthorsXXX. It is in two versions: the raw R script in qmd format and the code output in html format. 
 
-The goal was to test the effect of Tank on Siamese fish behaviour. The tanks Jar, Small, Medium and Large are compared among each other, and the tank Large and Barren between each other. Barren is not compared to Jar, Small or Medium because they differ by two factors: enrichment and size. 
+The goal was to test the effect of tank enrichment and size on Siamese fish behaviour. The tanks Jar, Small, Medium and Large are compared among each other, and the tank Large and Barren between each other. Barren is not compared to Jar, Small or Medium because they differ by two factors: enrichment and size. 
 
-On the html version of the scode, you fill find below a first row of tabs to click on (PCA, Swimming, etc) and for most of these tabs, a second row of tabs to click on (Distribution, Plot, etc).
+On the html version of the code, you fill find below a first row of tabs to click on (PCA, Swimming, etc) and for most of these tabs, a second row of tabs to click on (Distribution, Plot, etc).
 
 ::: {.panel-tabset}
 
@@ -42,7 +42,16 @@ Sinking/Floating was not analysed (see explanation in the PCA section).
 
 The data has been inspected and corrected for data entry errors (sum of scored behaviours too low/high, column shifted, typos, inconsistent nb of observations per fish/time/tank...).
 
+Each row represents a trial. For each trial, there is:
++ Fish: the fish tested
++ Tank: in which tank the fish was
++ Order: the tank order, i.e. whether it was the first, second, ..., fifth tank that the fish experienced.
++ Time: time of the day at which the trial happened
++ Filter: where there a filter in the tank
++ Behavioural columns. The columns for the behaviours are the time spent doing the specific behaviour in seconds during the trial. Some behaviours (Forgaging, Hovering, Interaction.with.Surface, Stereotypic.swimming) have been trasnformed in binary variable (.bin). The columns .bins represents if the fish performed the specific behaviour at all during the trial or not. 
+
 ```{r}
+#| warning: false
 summary(data)
 
 # Number of observations per fish per tank
@@ -105,7 +114,7 @@ We run a PCA in order to:
 + Determine which behaviours were important to explain the variability between trials
 + See correlations between behaviours
 
-The PCA did not help reduce the number of variables to analyse (see Analysis_PCA.html for more explanation) so the behaviours were analysed separately with linear models. The advantage compared to the PCA is the possibility to quantitatively interpret the differences between tanks.
+The PCA did not help reduce the number of variables to analyse (see Analysis_PCA.html for more explanation) so the behaviours were analysed separately with linear models. The advantage of separate linear models compared to the PCA is the possibility to quantitatively interpret the differences between tanks.
 
 Even if we did not use PCA for further analysis, the first 4 components are plotted below, which explained 71% of variance in the data, to show the important variables and the correlations between variables. 
 
@@ -158,7 +167,7 @@ plot_var_fish(data, "Swimming")
 ```{r}
 #| column: page
 mSwimming <- lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = data)
-lm_results(mSwimming)
+anova(mSwimming, ddf = "Kenward-Roger", type = 2)
 calc_contrasts(mSwimming)
 emmeans(mSwimming, ~ Time) # estimated means of time spent swimming depending on the time of the day 
 emmeans(mSwimming, ~ Filter)
@@ -180,8 +189,7 @@ base::load("Script/Repeatability rptR output/rpt.swimming")
 summary(rpt.swimming)
 ```
 
-Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2). 
-
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2 [95% CI 0.04, 0.35]). 
 
 ## Diagnosis
 
@@ -219,7 +227,7 @@ plot_var_fish(data, "Resting")
 ```{r}
 #| column: page
 mResting <- lmer(Resting ~ Tank + Time + Filter + (1|Fish), data = data)
-lm_results(mResting)
+anova(mResting, ddf = "Kenward-Roger", type = 2)
 calc_contrasts(mResting)
 emmeans(mResting, ~ Time)
 ```
@@ -239,7 +247,7 @@ base::load("Script/Repeatability rptR output/rpt.resting")
 summary(rpt.resting)
 ```
 
-Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is OK 0.37
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is OK 0.37 [95% CI 0.15, 0.56].
 
 ## Diagnosis
 
@@ -256,6 +264,7 @@ Just a plot with the amount of time resting at the different places depending on
 ```{r}
 #| column: page
 #| echo: false
+#| message: false
 data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),], 
             c("Tank","Resting.place","Fish","Filter","Time"), 
             c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
@@ -264,7 +273,7 @@ data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),],
   mutate(Resting.place = fct_drop(Resting.place),
          Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
 
-palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#84A01A","#84B05D", "#6B4940","#6B4921", "#B8B8B8")
+palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#94A152","#84B05D", "#9C7341","#6B4921", "#B8B8B8")
 
 data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
@@ -318,7 +327,7 @@ data %>% filter(Hovering >0) %>%
   plot_var_fish(., "Hovering")
 ```
 
-All fish besides Goblin hovered more in Jar compared to Small.
+Both the probability to hover and the time spent hovering seems to be higher in Jar compared to the others. All fish besides Goblin hovered more in Jar compared to Small.
 
 ## Generalised linear model 
 
@@ -385,6 +394,7 @@ Just a plot with where the fish hovers at the different places depending on the 
 ```{r}
 #| column: page
 #| echo: false
+#| message: false
 data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
             c("Tank","Hovering.place","Fish","Filter","Time"), 
             c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
@@ -821,7 +831,7 @@ We can do different models:
 
 ```{r}
 mUp <- lmer(adj.up ~ Tank + Time + Filter + (1|Fish), data = dataUpDown)
-lm_results(mUp)
+anova(mUp, ddf = "Kenward-Roger", type = 2)
 calc_contrasts(mUp)
 emmeans(mUp, ~ Time) # estimated means of time spent swimming depending on the time of the day 
 emmeans(mUp, ~ Filter) # estimated means of time spent swimming depending on the time of the day
