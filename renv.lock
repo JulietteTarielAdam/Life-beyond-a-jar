@@ -1141,9 +1141,9 @@
     },
     "glmmTMB": {
       "Package": "glmmTMB",
-      "Version": "1.1.7",
+      "Version": "1.1.9",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "Matrix",
         "R",
@@ -1151,10 +1151,11 @@
         "TMB",
         "lme4",
         "methods",
+        "mgcv",
         "nlme",
         "numDeriv"
       ],
-      "Hash": "1f05010509ced5b0f1a55cc46a67b1ef"
+      "Hash": "1d08bfb9b7130b67a81e4783a49da757"
     },
     "glue": {
       "Package": "glue",

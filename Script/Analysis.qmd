@@ -328,7 +328,7 @@ Y variable = probability to hover during a trial
 #| column: page
 mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
 
-Anova(mHovering)
+glmmTMB:::Anova.glmmTMB(mHovering)
 
 emmeans(mHovering, ~ Time, type = "response")
 emmeans(mHovering, ~ Filter, type = "response")
@@ -473,7 +473,7 @@ plot_var_binary_fish(data, "Foraging.bin")
 #| column: page
 mForaging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
 
-Anova(mForaging)
+glmmTMB:::Anova.glmmTMB(mForaging)
 
 calc_contrasts_bin(mForaging)
 # example of differences between Jar and Large
@@ -554,7 +554,7 @@ Huge variability between fish as always. Some fish never performed stereotypic s
 #| column: page
 mSS <- glmmTMB(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
 
-Anova(mSS)
+glmmTMB:::Anova.glmmTMB(mSS)
 
 calc_contrasts_bin(mSS)
 ```
@@ -673,7 +673,7 @@ Idem analysis binary generalised linear models.
 #| column: page
 mInteracting <- glmmTMB(Interacting.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
 
-Anova(mInteracting)
+glmmTMB:::Anova.glmmTMB(mInteracting)
 
 calc_contrasts_bin(mInteracting)
 ```
@@ -758,7 +758,7 @@ There are 1 trial out of 5 where there was nest building. Analysis with binary g
 #| column: page
 mNest <- glmmTMB(Nest.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
 
-Anova(mNest)
+glmmTMB:::Anova.glmmTMB(mNest)
 
 calc_contrasts_bin(mNest)
 emmeans(mNest, ~ Filter, type = "response")

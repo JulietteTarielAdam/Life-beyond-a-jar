@@ -11,13 +11,12 @@ editor_options:
 source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
+data$Order.fac <- factor(data$Order)
 ```
 
-Order in which the fish experienced the tanks. Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Barren was the last tank = 5th tank for all fish. Is there an effect of the order of treatments? For instance, were fish more swimming on average during the 1st or 2nd tnak they went in?  
+Order in which the fish experienced the tanks. Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Barren was the last tank = 5th tank for all fish. Is there an effect of the order of treatments? For instance, were fish more swimming on average during the 1st or 2nd tank they went in?  
 
-A problem because all fish experienced Barren last, we cannot disentangle the effect of Barren from the effect of order. Maybe all the changes in behaviour in Barren were only because it was the last tank the fish went into. At least, we are comparing Large and Barren -Large is not always the 4th tank- so we are not always comparing the same tank orders when comparing Large and Barren. 
-
-We can only investigate the effect of order when excluding Barren. It is then missing up the analysis we did before because we were analysing all tanks together; it is a bit of a pain to do two models for each behaviour (one for Jar, Small, Medium and Large, and one for Large and Barren). Don't know what to do, wait if the reviewers say something? Or change the analysis? 
+A problem because all fish last experienced Barren, we cannot disentangle the effect of Barren from the effect of order. Maybe all the changes in behaviour in Barren were only because it was the last tank the fish went into. At least, we are comparing Large and Barren -Large is not always the 4th tank- so we are not always comparing the same tank orders when comparing Large and Barren. 
 
 ```{r}
 #| warning: false
@@ -26,28 +25,24 @@ data %>% filter(Tank != "Barren") %>%
   ggtitle("Tank order")
 ```
 
+# Swimming
+
 Treat tank order as a continuous or categorical variable? 
 
 ```{r}
-plot(data$Swimming ~ factor(data$Order))
+plot(data$Swimming ~ data$Order.fac)
 ggplot(data, aes(y = Swimming, x = Order)) + geom_point() + geom_smooth()
 ```
 
-Considering the plot of the relationship between Swimming and Tank order, tank order is better as a categorical variable.
+Considering the plot of the relationship between Swimming and Tank order (no linear relationship), tank order is better as a categorical variable.
+
+After, comparison of models with or without tank order, on the full or subset dataset without Barren
 
 ```{r}
-# with tank order as categorical variable
-mOrder.fac <- lmer(Swimming ~ Tank + Time + Filter + factor(Order) + (1|Fish), data = filter(data, Tank !="Barren"))
-# with tank order as continuous variable
-mOrder.con <-  lmer(Swimming ~ Tank + Time + Filter + Order + (1|Fish), data = filter(data, Tank !="Barren"))
-# with tank order and squared tank order
-mOrder.con2 <-  lmer(Swimming ~ Tank + Time + Filter + Order + I(Order^2) + (1|Fish), data = filter(data, Tank !="Barren"))
-
-AIC(mOrder.fac,mOrder.con, mOrder.con2)
-
-
-anova(model, ddf = "Kenward-Roger", type = 2) 
-emmeans(model, ~ Tank) %>% 
+# With tank order on data without Barren
+mOrder.Swimming.subset <- lmer(Swimming ~ Tank + Time + Filter + Order.fac + (1|Fish), data = filter(data, Tank !="Barren"))
+anova(mOrder.Swimming.subset , ddf = "Kenward-Roger", type = 2) 
+emmeans(mOrder.Swimming.subset, ~ Tank) %>% 
   contrast(.,
            list(jar_vs_small     = c(1,-1, 0, 0), 
                 jar_vs_medium    = c(1, 0,-1, 0), 
@@ -56,57 +51,109 @@ emmeans(model, ~ Tank) %>%
                 small_vs_large   = c(0, 1, 0,-1), 
                 medium_vs_large  = c(0, 0, 1,-1)),
            adjust = "holm")
-# without tank order
-lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = filter(data, Tank !="Barren")) %>% 
-  anova(., ddf = "Kenward-Roger", type = 2)
+# Without tank order on data without Barren
+mSwimming.subset <-lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = filter(data, Tank !="Barren")) 
+anova(mSwimming.subset , ddf = "Kenward-Roger", type = 2)
+AIC(mOrder.Swimming.subset , mSwimming.subset)
+
+# With tank order on all data
+mOrder.Swimming <-lmer(Swimming ~ Tank + Time + Filter + Order.fac + (1|Fish), data = data) 
+anova(mOrder.Swimming , ddf = "Kenward-Roger", type = 2)
+## Contrasts among Jar, Small, Medium and Large over Orders 1 to 4
+emmeans(mOrder.Swimming, ~ Tank , 
+                       at = list(Tank = c("Jar", "Small", "Medium", "Large"), 
+                                 Order.fac = c("1", "2", "3", "4"))) %>% 
+  contrast(.,
+           list(jar_vs_small     = c(1,-1, 0, 0), 
+                jar_vs_medium    = c(1, 0,-1, 0), 
+                jar_vs_large     = c(1, 0, 0,-1),
+                small_vs_medium  = c(0, 1,-1, 0),
+                small_vs_large   = c(0, 1, 0,-1), 
+                medium_vs_large  = c(0, 0, 1,-1)),
+           adjust = "holm")
+## Contrasts between Large (over Orders 1 to 4) and Barren
+emm1 <- emmeans(mOrder.Swimming, ~ Tank , 
+                       at = list(Tank = c("Large"), 
+                                 Order.fac = c("1", "2", "3", "4")))
+emm2 <- emmeans(mOrder.Swimming, ~ Tank , 
+                       at = list(Tank = c("Barren"), 
+                                 Order.fac = c("5")))
+contrast(rbind(emm1,emm2), list(large_vs_barren= c(1,-1)))
+## Estimated means for Orders 1 to 4
+emm1 <- emmeans(mOrder.Swimming, ~ Order.fac, 
+                       at = list(Order.fac = c("1", "2", "3", "4")))
+
+# Without tank order on all data
+mSwimming <-lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = data) 
+
+AIC(mOrder.Swimming,mSwimming)
 ```
 
-Comparison of all models (besides Hovering and Interaction with surface) with or without tank order in the model, excluding Barren data
+Significant effect of tank order + The best model is the one with tank order (in terms of AIC) on the full dataset or dataset without Barren => Tank order needs to be included in the model... 
 
-Significant effect of tank order
-Still an effect of tank
+Good news:
++ I found a way to calculate contrasts among Jar, Small, Medium and Large on the model with all data!
++ I found a way to calculate the contrast between contrast Large (estimated across Orders 1 to 4) and Barren at Order 5.
++ Still an effect of tank when tank order is included
+
+# Resting
 
 ```{r}
 # with tank order
-model <- lmer(Resting ~ Tank + Time + Filter + factor(Order) + (1|Fish), data = filter(data, Tank !="Barren"))
-anova(model, ddf = "Kenward-Roger", type = 2) 
-emmeans(model, ~ Tank) %>% 
-  contrast(.,
-           list(jar_vs_small     = c(1,-1, 0, 0), 
-                jar_vs_medium    = c(1, 0,-1, 0), 
-                jar_vs_large     = c(1, 0, 0,-1),
-                small_vs_medium  = c(0, 1,-1, 0),
-                small_vs_large   = c(0, 1, 0,-1), 
-                medium_vs_large  = c(0, 0, 1,-1)),
-           adjust = "holm")
+mOrder.Resting <- lmer(Resting ~ Tank + Time + Filter + Order.fac + (1|Fish), data = data)
+anova(mOrder.Resting, ddf = "Kenward-Roger", type = 2) 
+
 # without tank order
-lmer(Resting ~ Tank + Time + Filter + (1|Fish), data = filter(data, Tank !="Barren")) %>% 
-  anova(., ddf = "Kenward-Roger", type = 2)
+mResting <- lmer(Resting ~ Tank + Time + Filter + (1|Fish), data = data) 
+
+AIC(mOrder.Resting, mResting)
 ```
 
-Significant effect of tank order
-Still an effect of tank
+Idem Swimming
+
+# Foraging
 
 ```{r}
-glmmTMB(Foraging.bin ~ Tank + Time + Filter + factor(Order) + (1|Fish), data = filter(data, Tank !="Barren"), family =binomial) %>% 
-  Anova(.)
+mOrder.Foraging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + Order.fac + (1|Fish), data = data, family =binomial, control = glmmTMBControl(rank_check = "adjust")) 
+glmmTMB:::Anova.glmmTMB(mOrder.Foraging)
+
+mForaging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+AIC(mOrder.Foraging,mForaging)
 ```
 
-No effect of tank order
-Still an effect of tank
+The model is better without Tank order + no effect of tank order. Still a significant effect of Tank with Tank order in the model.
+
+# Nest building
 
 ```{r}
-glmmTMB(Nest.bin ~ Tank + Time + Filter + factor(Order) + (1|Fish), data = filter(data, Tank !="Barren"), family =binomial) %>% 
-  Anova(.)
+mOrder.Nesting <- glmmTMB(Nest.bin ~ Tank + Time + Filter + Order.fac + (1|Fish), data = data, family =binomial, control = glmmTMBControl(rank_check = "adjust")) 
+glmmTMB:::Anova.glmmTMB(mOrder.Nesting)
+
+mNesting <- glmmTMB(Nest.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+AIC(mOrder.Nesting,mNesting)
 ```
 
-No effect of tank order
-Lose the effect of tank
+Idem Foraging, the model is better without Tank order + no effect of tank order. However, keeping Tank order removes the significant effect of Tank on Nest Building
+
+# Stereotypic Swimming
 
 ```{r}
-glmmTMB(SS.bin ~ Tank + Time + Filter + factor(Order) + (1|Fish), data = filter(data, Tank !="Barren"), family =binomial) %>% 
-  Anova(.)
+mOrder.SS <- glmmTMB(SS.bin ~ Tank + Time + Filter + Order.fac + (1|Fish), data = data, family =binomial, control = glmmTMBControl(rank_check = "adjust")) 
+glmmTMB:::Anova.glmmTMB(mOrder.SS)
+
+mSS <- glmmTMB(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+
+AIC(mOrder.SS,mSS)
 ```
 
-No effect of tank order
-Still an effect of tank
+Idem Foraging
+
+# Dragon
+
+What happen to Dragon during its exception of the first tank it went into? Do we consider the second tank it went into as tank order = 1 or tank order = 2? 
+
+# Conclusion
+
+I think we need to include Tank order in the model... A bit of a pain. It took me a long time to figure out how to calculate estimated means and contrasts on the new models that are rank-deficient factorial ANOVA, but I did it! 
