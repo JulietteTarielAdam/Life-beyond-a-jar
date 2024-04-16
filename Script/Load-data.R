@@ -17,7 +17,6 @@ library(emmeans) # estimate posthoc contrasts
 # library(easystats)
 library(fitdistrplus) # find potential distributions other than normal distribution
 library(glmmTMB) # fit the GLMMs
-library(lmtest) # lrtest() to do LRT with glmmTMB package
 library(DHARMa) # estimate residuals for the GLMMs to do the diagnosis of the model
 library(rptR) # estimate CI of repeatability
 library(performance) # for the function check_model
@@ -103,3 +102,20 @@ data$SS.bin <- factor(ifelse(data$Stereotypic.swimming != 0, "Yes", "No"))
 data$Hovering.bin <- factor(ifelse(data$Hovering != 0, "Yes", "No"))
 data$Interacting.bin <- factor(ifelse(data$Interation.with.surface != 0, "Yes", "No"))
 data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
+
+# Resting place
+data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),], 
+              c("Tank","Resting.place","Fish","Filter","Time"), 
+              c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
+              function(x) colSums(x, na.rm = TRUE)) %>% 
+  filter(Resting.place!= "N/A") %>% 
+  mutate(Resting.place = fct_drop(Resting.place),
+         Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
+
+# Hovering place
+data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
+              c("Tank","Hovering.place","Fish","Filter","Time"), 
+              c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
+              function(x) colSums(x, na.rm = TRUE)) %>% 
+  mutate(Hovering.place = fct_drop(Hovering.place),
+         Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))

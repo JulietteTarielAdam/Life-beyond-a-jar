@@ -1,0 +1,140 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+#| include: false
+# Run the scripts that load the data and that contains the functions to plot and do the linear models
+source("Script/Load-data.R")
+source("Script/Functions/Plots.R")
+source("Script/Functions/Linear-model.R")
+
+# change size big red dot
+plot_var <- function(data, variable){
+  ggplot(data, aes_string(y = variable, x = "Tank")) +
+    geom_jitter(alpha = .5, width = 0.1, height=0, color = grey(0.25), size = .8) +
+    stat_summary(fun.min = function(x) mean(x) - sd(x), 
+                 fun.max = function(x) mean(x) + sd(x), 
+                 geom = "errorbar",colour = "red", width = 0.15, alpha =  .75)+
+    stat_summary(fun.y = mean,geom = "point", colour = "red", size = 3)
+}
+
+(plotA <- plot_var(data, "Swimming") +
+   ylab("Time spent swimming (sec)")+
+   ggtitle("A. Swimming"))
+```
+
+# PCA
+```{r}
+(plotPCA1 <- plot(pca, choix = "var", col.var = palette.beh2) + labs(title = NULL))
+(plotPCA2 <- plot(pca, choix = "var", axes = c(3,4), col.var = palette.beh2) + labs(title = NULL))
+
+(plotPCA <- ggarrange(plotPCA1, plotPCA2, labels =LETTERS[1:2]))
+ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
+```
+
+# All behaviours
+
+## Figure 1
+
+```{r}
+(plot.tank <- plot1("Tank") + 
+   ylab("Time spent doing the behaviour (sec)")+
+   guides(fill=guide_legend(title="Behaviour"))+
+   ggtitle("A. Tank"))
+
+(plot.time <- plot1("Time") + 
+    ylab("Time spent doing the behaviour (sec)")+
+    guides(fill=guide_legend(title="Behaviour"))+
+    ggtitle("B. Time of day"))
+
+(plot.filter <- plot1("Filter") + 
+    ylab("Time spent doing the behaviour (sec)")+
+    guides(fill=guide_legend(title="Behaviour"))+
+    ggtitle("C. Filter"))
+
+(plot1 <- ggarrange(plot.tank,
+                    ggarrange(plot.time, plot.filter, legend = "none"),
+                    common.legend = TRUE, legend = "top", nrow = 2))
+ggsave(plot1, filename = "Plots/Fig1.png",width = 8.11, height = 8.98)
+```
+
+## Figure 2
+
+```{r}
+(plotA <- plot_var(data, "Swimming") +
+   ylab("Time spent swimming (sec)")+
+   ggtitle("A. Swimming"))
+
+(plotB <- plot_var(data, "Resting") +
+   ylab("Time spent resting (sec)")+
+   ggtitle("B. Resting"))
+
+(plotC1 <- plot_var(subset(data, Hovering >0), "Hovering") +
+   ylab("Time spent hovering (sec)")+
+   ggtitle("C1. Hovering"))
+
+(plotC2 <- plot_var_binary(data, "Hovering.bin") +
+   ylab("% of trials with hovering")+
+    ylim(0,100)+
+   ggtitle("C2. Hovering"))
+
+(plotD <- plot_var_binary(data, "SS.bin") +
+   ylab("% of trials with stereo. swim.")+
+    ylim(0,100)+
+   ggtitle("D. Stereotypic swimming"))
+
+(plotE <- plot_var_binary(data, "Nest.bin") +
+   ylab("% of trials with nest building")+
+    ylim(0,100)+
+   ggtitle("E. Nest building"))
+
+(plotF <- plot_var_binary(data, "Foraging.bin") +
+   ylab("% of trials with foraging")+
+    ylim(0,100)+
+   ggtitle("F. Foraging"))
+
+(plotG <- plot_var_binary(data, "Interacting.bin") +
+   ylab("% of trials with intera. with surf.")+
+    ylim(0,100)+
+   ggtitle("G. Interaction with surface"))
+
+(plot2 <- ggarrange(plotA, plotB, plotC1, plotC2, plotD, plotE, plotF, plotG,
+                    ncol = 2, nrow = 4))
+ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
+
+```
+
+# By individual fish
+## All behaviours
+
+
+
+## Resting place
+```{r}
+(plotRPfish <- data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
+  ggplot(., aes(y = Resting, x = Fish,fill = Resting.place, width=.75))+
+  geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_RP)+
+  guides(fill = guide_legend(position = "top", title = NULL))+
+  scale_y_continuous(labels=c(0,25,50,75,100)) +
+  ylab("% of time resting at the different places")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)))
+
+ggsave(plotRPfish, filename = "Plots/FigRPfish.png", width = 6.81, height = 6.22)
+```
+
+## Hovering place
+```{r}
+(plotHPfish <- data_HP %>%   filter(!is.na(Hovering.place)) %>% 
+  group_by(Fish, Hovering.place) %>% summarise(Hovering = mean(Hovering)) %>% 
+  ggplot(., aes(y = Hovering, x = Fish,fill = Hovering.place, width=.75))+
+  geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_HP)+
+  guides(fill = guide_legend(position = "top", title = NULL,nrow=2))+
+  scale_y_continuous(labels=c(0,25,50,75,100)) +
+  ylab("% of time hovering at the different places")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)))
+ggsave(plotHPfish, filename = "Plots/FigHPfish.png", width = 6.81, height = 6.22)
+```

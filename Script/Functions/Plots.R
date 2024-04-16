@@ -9,6 +9,11 @@ palette.beh3 = c(palette.beh2,"grey")
 ## Fish
 palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 
+## Resting place
+palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#94A152","#84B05D", "#9C7341","#6B4921", "#B8B8B8")
+
+## Hovering place
+palette_HP <- c("#E3C9B8", "#6eacc4", "#89D7F5", "#d0effb","#6B4921")
 
 # plot to see all behaviour types
 plot1 <- function(x_var, facet_var = NULL, main = data, beh_cols = beh.cols, palette = palette.beh){

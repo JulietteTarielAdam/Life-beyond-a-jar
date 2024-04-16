@@ -265,16 +265,6 @@ Just a plot with the amount of time resting at the different places depending on
 #| column: page
 #| echo: false
 #| message: false
-data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),], 
-            c("Tank","Resting.place","Fish","Filter","Time"), 
-            c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
-            function(x) colSums(x, na.rm = TRUE)) %>% 
-  filter(Resting.place!= "N/A") %>% 
-  mutate(Resting.place = fct_drop(Resting.place),
-         Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
-
-palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#94A152","#84B05D", "#9C7341","#6B4921", "#B8B8B8")
-
 data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
@@ -395,15 +385,6 @@ Just a plot with where the fish hovers at the different places depending on the 
 #| column: page
 #| echo: false
 #| message: false
-data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
-            c("Tank","Hovering.place","Fish","Filter","Time"), 
-            c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
-            function(x) colSums(x, na.rm = TRUE)) %>% 
-  mutate(Hovering.place = fct_drop(Hovering.place),
-         Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
-
-palette_HP <- c("#E3C9B8", "#89D7F5", "#BFEBE5", "#cae9eb","#6B4921")
-
 data_HP %>% 
   filter(!is.na(Hovering.place)) %>% 
   group_by(Tank, Hovering.place) %>% 
@@ -486,11 +467,11 @@ rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fi
 mForaging2 <- glmer(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family = "binomial")
 
 # Likelihood ratio test of random effect
-mForaging0 <- glm(Foraging.bin ~ Tank + Time + Filter, data = data, family =binomial)
-lrtest(mForaging0, mForaging)
+mForaging0 <- glmmTMB(Foraging.bin ~ Tank + Time + Filter, data = data, family =binomial)
+anova(mForaging0, mForaging)
 ```
 
-Error when calculating the repeatability with rptR. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable. I tried to use the lmer package to calculate the repeatability with rptR but the model failed to converge when using glmer()
+Error when calculating the repeatability with rptR. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable. I tried to use the lmer package to calculate the repeatability with rptR but the model failed to converge when using glmer().
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of foraging. 
 
@@ -558,8 +539,8 @@ rpt.SS <- rpt(SS.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = 
 mSS2 <- glmer(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family = "binomial")
 
 # Likelihood ratio test of random effect
-mSS0 <- glm(SS.bin ~ Tank + Time + Filter, data = data, family =binomial)
-lrtest(mSS0, mSS)
+mSS0 <- glmmTMB(SS.bin ~ Tank + Time + Filter, data = data, family =binomial)
+anova(mSS0, mSS)
 ```
 
 Error when calculating the repeatability with rptR, idem Foraging. 
@@ -628,7 +609,7 @@ data_SST2 %>%
   arrange(Fish, Tank, Time)
 ```
 
-I don't think there are enough data to really say something about the number of repetitions. The number of repetitions seems pretty unique to a fish in a certain tank. I don't see ab obvious pattern depending on the tank. The interesting thing is that the stereotypic swimming seemed consistent in a tank for a fish (most or all trials of that day with stereotypic swimming). It is a pitty we couldn't calculate the repeatability of the binomial glm of Stereotypic Swimming because it would have been interesting. 
+I don't think there are enough data to really say something about the number of repetitions. The number of repetitions seems pretty unique to a fish in a certain tank. I don't see an obvious pattern depending on the tank. The interesting thing is that the stereotypic swimming seemed consistent in a tank for a fish (most or all trials of that day with stereotypic swimming). It is a pitty we couldn't calculate the repeatability of the binomial glm of Stereotypic Swimming because it would have been interesting. 
 
 :::
 
@@ -671,8 +652,8 @@ Effect of Tank.
 ## Between-fish diff
 
 ```{r}
-mInteracting0 <- glm(Interacting.bin ~ Tank + Time + Filter, data = data, family =binomial)
-lrtest(mInteracting0, mInteracting)
+mInteracting0 <- glmmTMB(Interacting.bin ~ Tank + Time + Filter, data = data, family =binomial)
+anova(mInteracting0, mInteracting)
 ```
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of interaction with surface. 
@@ -690,6 +671,8 @@ The model seems good.
 ## Interacting types
 
 Just a plot with the type of interaction depending on the tank. To stick with the analysis, it is a count (count = 1 if the fish performs a certain type of interaction with surface during a trial). 
+
+The second plot groups similar interactions with surface together.
 
 ```{r}
 #| column: page
@@ -757,8 +740,8 @@ Effect of Tank and Filter.
 ## Between-fish diff
 
 ```{r}
-mNest0 <- glm(Nest.bin ~ Tank + Time + Filter, data = data, family =binomial)
-lrtest(mNest0, mNest)
+mNest0 <- glmmTMB(Nest.bin ~ Tank + Time + Filter, data = data, family =binomial)
+anova(mNest0, mNest)
 ```
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of nest building. 
@@ -829,56 +812,9 @@ The model seems good.
 
 :::
 
-:::
-
-
-# Figures for the paper
-
-## PCA
-```{r}
-(plotPCA1 <- plot(pca, choix = "var", col.var = palette.beh2) + labs(title = NULL))
-(plotPCA2 <- plot(pca, choix = "var", axes = c(3,4), col.var = palette.beh2) + labs(title = NULL))
-
-(plotPCA <- ggarrange(plotPCA1, plotPCA2, labels =LETTERS[1:2]))
-ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
-```
-
-## All behaviours
-```{r}
-(plot.tank <- plot1("Tank") + 
-  ylab("Time spent doing the behaviour (sec)")+
-  theme(legend.position="right") +
-  guides(fill=guide_legend(title="Behaviour")))
-
-(plot.time <- plot1("Time") + 
-  ylab("Time spent doing the behaviour (sec)")+
-  theme(legend.position="right") +
-  guides(fill=guide_legend(title="Behaviour")))
-
-(plot.filter <- plot1("Filter") + 
-  ylab("Time spent doing the behaviour (sec)")+
-  theme(legend.position="right") +
-  guides(fill=guide_legend(title="Behaviour")))
-```
-
-## Time spent
-Resting, hovering, swimming
-```{r}
-#(plotSwimming <- plot_var(data, "Swimming") + ylab("Time spent swimming (sec)"))
-
-```
-
-Plot each fish time with individual data? 
-plotRP1
-plotRP2
-
 # Conclusion
 
-First, the PCA to show the correlations between variables and to highlight the important variables that contribute to the most of variability in behaviour. 
-
-Second, I would do a first big table for the results of the anova with the F-value, NumDf, DenDf and associated p-value for the fixed effects Tank, Filter and Time fixed effects. For the generalised mixed models (foraging, stereotypic swimming, etc), it is not the F-value but the Chisq, Df and p-value Foraging, Stereotypic Swimming, etc). For the linear models, I will also include in this big table the results for the random effect (Variance explained by fish, Residual variance and Repeatability). Then, I would put another table with the results of the contrasts between tanks with the contrast estimates, their confidence intervals, the associated t- or z-tests and p-values for readers to have an idea of the size of the difference between treatments. It is worth noting that the confidence intervals are large which is normal considering the number of fish.
-
-Based on the two tables, what we can say first is that there is a effect of the Tank on all behaviours, the tank is there having a big influence on the betta's behaviour. Then, it seems that we have three groups for the Jar/Small/Medium/Large
+What we can say first is that there is a effect of the Tank on all behaviours, the tank is there having a big influence on the betta's behaviour. Then, it seems that we have three groups for the Jar/Small/Medium/Large
 
 + Jar with less likely to build a nest and less likely to perform stereotypic swimming compared to the others
 + Small and Medium
@@ -888,7 +824,7 @@ And Large and Barren are two different groups
 + Barren with less likely to build a nest
 + Large with more time swimming, more likely to forage and less likely to interact with the surface
 
-Also, I would put something about the fact that each fish behave pretty uniquely. 
+Fianlly, we can say that each fish behave pretty uniquely. 
 
 # R version 
 
@@ -896,4 +832,4 @@ Also, I would put something about the fact that each fish behave pretty uniquely
 sessionInfo()
 ```
 
-
+:::
