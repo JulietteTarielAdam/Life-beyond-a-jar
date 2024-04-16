@@ -108,6 +108,21 @@ ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
 
 # By individual fish
 ## All behaviours
+```{r}
+(plotFish <-tf(data, grouping = "Fish", beh.cols, colMeans) %>% 
+  pivot_longer(cols = beh.cols , names_to ="Behaviour", values_to="time") %>% 
+  mutate(Behaviour = fct_relevel(Behaviour, beh.cols),
+         group = fct_collapse(Fish, "1" = levels(Fish)[1:7], "2" = levels(Fish)[8:13])) %>% 
+  ggplot(., aes_string(fill = "Behaviour", y = "time", x = "Fish"))+
+  geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
+  scale_fill_manual(values = palette.beh)+
+  ylab("Time spent doing the behaviour (sec)")+
+  facet_wrap(~group, scales = "free_x", ncol = 1)+
+  theme(legend.position="top",
+        strip.background = element_blank(),
+        strip.text.x = element_blank()))
+ggsave(plotFish, filename = "Plots/FigFish.png", width = 8.27, height = 6.27)
+```
 
 
 
