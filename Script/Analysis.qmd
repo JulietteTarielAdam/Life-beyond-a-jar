@@ -89,6 +89,8 @@ plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3)
 plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 4) + ggtitle("Per fish")
 
 plot1("Time", main = data3, beh_cols = beh.cols3, palette = palette.beh3) + ggtitle("Per time")
+
+plot1("Order", main = data3, beh_cols = beh.cols3, palette = palette.beh3) + ggtitle("Tank order")
 ```
 
 ## Filter
@@ -166,18 +168,26 @@ plot_var_fish(data, "Swimming")
 
 ```{r}
 #| column: page
-mSwimming <- lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = data)
+mSwimming <- lmer(Swimming ~ Tank + Time + Filter + Order + (1|Fish), data = data)
+# Error message due to the fact that all trials with Tank = Barren are also Order = "5"
 anova(mSwimming, ddf = "Kenward-Roger", type = 2)
-calc_contrasts(mSwimming)
-emmeans(mSwimming, ~ Time) # estimated means of time spent swimming depending on the time of the day 
-emmeans(mSwimming, ~ Filter)
+contr_tank.size(mSwimming)
+contr_tank.enrich(mSwimming)
+# estimated means of time spent swimming depending on:
+emmeans(mSwimming, ~ Time) # time of day
+emmeans(mSwimming, ~ Filter) # filter
+rbind(emmeans(mSwimming, ~ Order, at = list(Tank = c("Jar", "Small", "Medium", "Large"),Order = c("1", "2", "3", "4"))),
+      emmeans(mSwimming, ~ Order, at = list(Tank = c("Barren"),Order = "5"))) # tank order
 ```
 
-Effect of Tank, Time and Filter! 
+Effect of Tank, Time, Filter and Order! 
 
-+ Tank. Large swam significantly more time than Jar, Small and Medium. Fish in Large swan 93 sec [CI 45, 140] more than Jar (over a 600 sec trial), 79 sec [CI 32, 126] more than Small, and 81 sec [CI 39, 122] more than Medium. In addition,  fish in Large swam significantly more time (58 sec [CI 16, 101]) than fish in Barren. 
++ Tank. Large swam significantly more time than Jar, Small and Medium. Fish in Large swan 92 sec [CI 46, 138] more than Jar (over a 600 sec trial), xx sec [CI xx, xx] more than Small, and xx sec [CI xx, xx] more than Medium. In addition,  fish in Large swam significantly more time (xx sec [CI xx, xx]) than fish in Barren. 
 + Time. Fish swim more in the morning than in the afternoon, especially at 7 am.
 + Filter. Fish swim more with a filter in their tank.
++ Order. All confidence intervals are overlapping so probably no significant difference between orders. It seems that fish swim more in their 2nd and 3rd tank.
+
++ Effect of Barren or tank order 5? The effect size of Tank (shown by the Sum Sq) is three times more than the effect size of Order. Max difference between orders 1-4 is 43 sec. Difference between Large and Barren/5 is 53. Effect of tank is stronger on time spent swimming, so it is likely the diff between Large and Barren/5 is due (at least party) to Tank.
 
 ## Between-fish diff
 
@@ -226,16 +236,20 @@ plot_var_fish(data, "Resting")
 
 ```{r}
 #| column: page
-mResting <- lmer(Resting ~ Tank + Time + Filter + (1|Fish), data = data)
+mResting <- lmer(Resting ~ Tank + Time + Filter + Order + (1|Fish), data = data)
 anova(mResting, ddf = "Kenward-Roger", type = 2)
-calc_contrasts(mResting)
+contr_tank.size(mResting)
+contr_tank.enrich(mResting)
 emmeans(mResting, ~ Time)
+rbind(emmeans(mResting, ~ Order, at = list(Tank = c("Jar", "Small", "Medium", "Large"),Order = c("1", "2", "3", "4"))),
+      emmeans(mResting, ~ Order, at = list(Tank = c("Barren"),Order = "5")))
 ```
 
-Effect of Tank and Time.
+Effect of Tank, Time and Order.
 
-+ Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 110 sec [CI 39, 181] more than fish in Jar (over a 600 sec trial), and 114 sec [CI 53, 175] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
++ Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 109 sec [CI 40, 178] **less** time than fish in Jar (over a 600 sec trial), and xx sec [CI xx, xx] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
 + Time. Fish rest less time in the morning, especially at 7 am. In line with the PCA and the results of Swimming.
++ Order. All confidence intervals are overlapping so probably no significant difference between orders. It seems that fish rest more in their 1st and 4th tank.
 
 ## Between-fish diff
 

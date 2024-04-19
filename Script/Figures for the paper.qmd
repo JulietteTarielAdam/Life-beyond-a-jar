@@ -126,8 +126,10 @@ ggsave(plotFish, filename = "Plots/FigFish.png", width = 8.27, height = 6.27)
 
 
 
-## Resting place
+# Resting place
 ```{r}
+
+
 (plotRPfish <- data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Fish,fill = Resting.place, width=.75))+
   geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+

@@ -26,7 +26,7 @@ library(nlme) # for the linear model of Hovering with weighted least squares
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
 
 # change order or name of factor levels
-master$Order.fac <- factor(master$Order)
+master$Order <- factor(master$Order)
 master$Tank <- factor(master$Tank, levels = c("Jar", "Small", "Medium", "Large", "Barren")) 
 master$Time <- factor(master$Time, levels = c("7:00 AM", "10:00 AM", "2:00 PM", "6:00 PM"))
 levels(master$Filter)
@@ -104,18 +104,14 @@ data$Interacting.bin <- factor(ifelse(data$Interation.with.surface != 0, "Yes", 
 data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
 
 # Resting place
-data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),], 
+## Analysis only for Small, Medium and Large
+data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar")
+data_RP <- tf(data_RP[data_RP$Resting !=0 & !is.na(data_RP$Resting),], 
               c("Tank","Resting.place","Fish","Filter","Time"), 
               c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
               function(x) colSums(x, na.rm = TRUE)) %>% 
   filter(Resting.place!= "N/A") %>% 
-  mutate(Resting.place = fct_drop(Resting.place),
-         Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
-
-# Hovering place
-data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
-              c("Tank","Hovering.place","Fish","Filter","Time"), 
-              c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
-              function(x) colSums(x, na.rm = TRUE)) %>% 
-  mutate(Hovering.place = fct_drop(Hovering.place),
-         Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
+  mutate(Resting.place = factor(Resting.place))
+         Resting.place = factor(Resting.place, 
+                                c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
+                                labels = c("Floor","Surface")))
