@@ -10,7 +10,7 @@ palette.beh3 = c(palette.beh2,"grey")
 palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 
 ## Resting place
-palette_RP <- c("#E3C9B8", "#89D7F5", "#AEE3B9", "#94A152","#84B05D", "#9C7341","#6B4921", "#B8B8B8")
+palette_RP <- c("#F3C8AC", "#A0F1FF", "#6DE481", "#A2794B", "#B8B8B8")
 
 ## Hovering place
 palette_HP <- c("#E3C9B8", "#6eacc4", "#89D7F5", "#d0effb","#6B4921")

@@ -105,13 +105,15 @@ data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
 
 # Resting place
 ## Analysis only for Small, Medium and Large
-data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar")
-data_RP <- tf(data_RP[data_RP$Resting !=0 & !is.na(data_RP$Resting),], 
-              c("Tank","Resting.place","Fish","Filter","Time"), 
+## Concatenate "Plant leaves" and "Under or against plant" together
+## Concatenate "Inside barrel" and "On or against barrel" together
+data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar") %>% 
+  filter(Resting !=0, !is.na(Resting))
+data_RP <- tf(data_RP,
+              c("Tank","Resting.place","Fish","Filter","Time","Order"),
               c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
-              function(x) colSums(x, na.rm = TRUE)) %>% 
-  filter(Resting.place!= "N/A") %>% 
-  mutate(Resting.place = factor(Resting.place))
-         Resting.place = factor(Resting.place, 
-                                c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
-                                labels = c("Floor","Surface")))
+              function(x) colSums(x, na.rm = TRUE)) %>%
+  filter(Resting.place!= "N/A") %>%
+  mutate(Resting.place = factor(Resting.place,
+levels = c("Floor","Surface","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
+labels = c("Floor","Surface", "Plant",  "Plant", "Barrel", "Barrel", "Filter")))
