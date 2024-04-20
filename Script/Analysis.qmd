@@ -193,13 +193,13 @@ Effect of Tank, Time, Filter and Order!
 
 ```{r}
 # Uncomment the 2 lines below if running the script for the first time
-## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 ## save(rpt.swimming, file = "Script/Repeatability rptR output/rpt.swimming")
 base::load("Script/Repeatability rptR output/rpt.swimming")
 summary(rpt.swimming)
 ```
 
-Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2 [95% CI 0.04, 0.35]). 
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2 [95% CI 0.06, 0.37]). 
 
 ## Diagnosis
 
@@ -255,13 +255,13 @@ Effect of Tank, Time and Order.
 
 ```{r}
 # Uncomment the 2 lines below if running the script for the first time
-## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 ## save(rpt.resting, file = "Script/Repeatability rptR output/rpt.resting")
 base::load("Script/Repeatability rptR output/rpt.resting")
 summary(rpt.resting)
 ```
 
-Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is OK 0.37 [95% CI 0.15, 0.56].
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is good 0.4 [95% CI 0.16, 0.58].
 
 ## Diagnosis
 
@@ -382,9 +382,9 @@ Y variable = amount of time spent hovering during a trial. Only trials with hove
 Linear model with weighted least squares
 
 ```{r}
-mHovering2 <- lme(Hovering ~ Tank + Time + Filter + Order, random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000), na.action =na.exclude)
+mHovering2 <- lme(Hovering ~ Tank + Time + Filter , random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000))
 
-mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,], weights = varPower(), weights=varFixed(~I(1/n))
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,], weights = varPower(), weights=varFixed(~I(1/n)))
 
 anova(mHovering2)
 calc_contrasts(mHovering2)
@@ -470,40 +470,39 @@ plot_var_binary_fish(data, "Foraging.bin")
 
 ```{r}
 #| column: page
-mForaging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+mForaging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data, family =binomial)
 
 glmmTMB:::Anova.glmmTMB(mForaging)
 
-calc_contrasts_bin(mForaging)
+contr_tank.size_bin(mForaging)
+contr_tank.enrich_bin(mForaging)
 # example of differences between Jar and Large
 ## Contrast estimate
-1/0.08
-## Lower CI
-1/0.437
+1/0.09
 ## Upper CI
-1/0.014
+1/0.015
+## Lower CI
+1/0.493
 ```
 
 Effect of Tank. 
 
 As a reminder, an odds.ratio < 1 between tank X vs tank Y means the probability of foraging during a trial in tank X is smaller that the probability of foraging during a trial in tank Y. An odd ratio for instance of 0.2 means that a fish is (1 / 0.2) = five times more likely to forage during a trial in tank Y than in Tank X. If we imagine 5 trials, fish will forage on average during 1 trial out of 5 in Tank X whereas fish will forage on average during 5 trials out of 5 in Tank Y. 
 
-+ Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 13 times [CI 2, 71] more likely to forage during a trial than fish in Jar, 25 times [CI 4, 166] than fish in Small, and 4 times [CI 1, 13] than fish in Medium. In addition, fish were 15 times [CI 3, 63] more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium.
++ Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 11 times [CI 2, 67] more likely to forage during a trial than fish in Jar, xx times [CI xx, xx] than fish in Small, and xx times [CI xx, xx] than fish in Medium. In addition, fish were xx times [CI xx, xx] more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium.
 
 ## Between-fish diff
 
 ```{r}
-# Attempt to calculate repeatability
-rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
-# attempt with package glmer rather than glmmTMB
-mForaging2 <- glmer(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family = "binomial")
+rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
+# can calculate repeatability but not the CI
 
 # Likelihood ratio test of random effect
-mForaging0 <- glmmTMB(Foraging.bin ~ Tank + Time + Filter, data = data, family =binomial)
+mForaging0 <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
 anova(mForaging0, mForaging)
 ```
 
-Error when calculating the repeatability with rptR. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable. I tried to use the lmer package to calculate the repeatability with rptR but the model failed to converge when using glmer().
+Can calculate the repeatability but not its CI. Cannot calculate repeatability for Stereotypic swimming anyway. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable.
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of foraging. 
 
@@ -551,24 +550,23 @@ Huge variability between fish as always. Some fish never performed stereotypic s
 
 ```{r}
 #| column: page
-mSS <- glmmTMB(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+mSS <- glmmTMB(SS.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data, family =binomial)
 
 glmmTMB:::Anova.glmmTMB(mSS)
 
-calc_contrasts_bin(mSS)
+contr_tank.size_bin(mSS)
 ```
 
 Effect of Tank. 
 
-+ Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Fish in Small were 33 times [CI 4, 333] more likely to perform stereotypic swimming during a trial than fish in Jar.
++ Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Fish in Small were xx times [CI xx, xx] more likely to perform stereotypic swimming during a trial than fish in Jar.
 
 ## Between-fish diff
 
 ```{r}
 # Attempt to calculate repeatability
-rpt.SS <- rpt(SS.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
-# attempt with package glmer rather than glmmTMB
-mSS2 <- glmer(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family = "binomial")
+rpt.SS <- rpt(SS.bin ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
+# error
 
 # Likelihood ratio test of random effect
 mSS0 <- glmmTMB(SS.bin ~ Tank + Time + Filter, data = data, family =binomial)

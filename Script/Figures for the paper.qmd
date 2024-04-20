@@ -100,8 +100,7 @@ ggsave(plot1, filename = "Plots/Fig1.png",width = 8.11, height = 8.98)
     ylim(0,100)+
    ggtitle("G. Interaction with surface"))
 
-(plot2 <- ggarrange(plotA, plotB, plotC1, plotC2, plotD, plotE, plotF, plotG,
-                    ncol = 2, nrow = 4))
+(plot2 <- ggarrange(plotA, plotB, plotC1, plotC2, plotD, plotE, plotF, plotG, ncol = 2, nrow = 4))
 ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
 
 ```
@@ -124,34 +123,35 @@ ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
 ggsave(plotFish, filename = "Plots/FigFish.png", width = 8.27, height = 6.27)
 ```
 
+## Each behaviour depending on tank by fish - Panel graphic
+
 
 
 # Resting place
-```{r}
 
+By tank  xxx
+By fish xxxx
+```{r}
+(plotRPtank <- data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
+   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
+   geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+   scale_fill_manual(values=palette_RP)+
+   theme(legend.title = element_blank())+
+   ylab("% of time resting at the different places")+
+   scale_y_continuous(labels=c(0,25,50,75,100))+
+   ggtitle("A"))
 
 (plotRPfish <- data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
-  ggplot(., aes(y = Resting, x = Fish,fill = Resting.place, width=.75))+
-  geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-  scale_fill_manual(values=palette_RP)+
-  guides(fill = guide_legend(position = "top", title = NULL))+
-  scale_y_continuous(labels=c(0,25,50,75,100)) +
-  ylab("% of time resting at the different places")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)))
+    ggplot(., aes(y = Resting, x = Fish,fill = Resting.place, width=.75))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+    scale_fill_manual(values=palette_RP)+
+    scale_y_continuous(labels=c(0,25,50,75,100)) +
+    ylab("% of time resting at the different places")+
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+          axis.title.y = element_blank())+
+    ggtitle("B"))
 
-ggsave(plotRPfish, filename = "Plots/FigRPfish.png", width = 6.81, height = 6.22)
-```
-
-## Hovering place
-```{r}
-(plotHPfish <- data_HP %>%   filter(!is.na(Hovering.place)) %>% 
-  group_by(Fish, Hovering.place) %>% summarise(Hovering = mean(Hovering)) %>% 
-  ggplot(., aes(y = Hovering, x = Fish,fill = Hovering.place, width=.75))+
-  geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-  scale_fill_manual(values=palette_HP)+
-  guides(fill = guide_legend(position = "top", title = NULL,nrow=2))+
-  scale_y_continuous(labels=c(0,25,50,75,100)) +
-  ylab("% of time hovering at the different places")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)))
-ggsave(plotHPfish, filename = "Plots/FigHPfish.png", width = 6.81, height = 6.22)
+(plotRP <- ggarrange(plotRPtank,plotRPfish, align = "h", widths = c(0.5, 1),
+                    common.legend = TRUE, legend = "top", nrow = 1))
+ggsave(plotRP, filename = "Plots/FigRP.png", width = 6.07, height = 4.22)
 ```
