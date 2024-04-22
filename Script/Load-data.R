@@ -117,3 +117,19 @@ data_RP <- tf(data_RP,
   mutate(Resting.place = factor(Resting.place,
 levels = c("Floor","Surface","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
 labels = c("Floor","Surface", "Plant",  "Plant", "Barrel", "Barrel", "Filter")))
+
+# Interaction.with.surface types
+data_IT <- tf(master[master$Interation.with.surface !=0 & !is.na(master$Interation.with.surface),], 
+              c("Tank","Interaction.with.surface.type","Fish","Filter","Time"), 
+              c("Interation.with.surface","Swimming"), # I have to specify two columns otherwise my function tf is not working
+              function(x) colSums(x, na.rm = TRUE)) %>% 
+  mutate(Interaction.with.surface.type = factor(Interaction.with.surface.type))
+levels(data_IT$Interaction.with.surface.type)
+## Group levels together
+data_IT$IT <- factor(data_IT$Interaction.with.surface.type, 
+                                                 labels = c(rep("Aggressive",8), rep("Bite",2), "Fold", rep("Head into",4),rep("Head shake/swim",5), "Bite",rep("Swim",2)))
+
+ggplot(data_IT, aes(fill = Interaction.with.surface.type2, x = Tank))+
+  geom_bar(stat= "count",color=grey(0.4))+
+  theme(legend.position="bottom")+
+  ylab("Count of trials")

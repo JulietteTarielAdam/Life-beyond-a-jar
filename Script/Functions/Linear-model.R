@@ -1,16 +1,8 @@
-# print the results of the fixed effects 
-lm_results <- function(model){
-  print("Anova")
-  anova <- anova(model, ddf = "Kenward-Roger", type = 2)
-  print(anova)
-  print("Fixed effect estimates")
-  print(summary(model)$coefficients)
-}
-
 # provide diagnostic assumptions of linear models
 lm_diagnosis <- function(model){
   print("check constant variance over fitted values")
   print(check_model(model, check="homogeneity"))
+  print(check_model(model, check="linearity"))
   print(paste0("Normality of ", attr(attr(attr(model,"frame"), "terms"),"varnames.fixed")[1]))
   qqnorm(residuals(model)) 
   qqline(residuals(model))

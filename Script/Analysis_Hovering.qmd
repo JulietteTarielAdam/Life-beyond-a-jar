@@ -100,7 +100,8 @@ Only considering positive hovering data Y > 0
 ```{r}
 mHovering <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering>0,])
 lm_diagnosis(mHovering)
-lm_results(mHovering)
+plotResiduals(mHovering, form =  data[data$Hovering>0,]$Tank)
+
 ```
 
 Problem homogeneity of variance, increase of residual variance with fitted values
@@ -117,7 +118,40 @@ qqline(resid(mHovering, type = "pearson"))
 ranefPlot <- ranef(mHovering, level = 1)
 qqnorm(ranefPlot$`(Intercept)`)
 qqline(ranefPlot$`(Intercept)`)
+boxplot(resid(mHovering, type = "pearson")~ Tank, data =  data[data$Hovering>0,])
 ```
+
+The normality is not great but ANOVA are robust to the assumption of normality.
+
+However, the model is not working when including Order. The nlme package does not handle rank-deficient models. The lmer does not handle increasing error variance with fitted values automatically... Below I tried to implement increasing error variance with fitted values using lmer package.
+
+```{r}
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,])
+weights_hovering <- data.frame(abs.res = abs(residuals(mHovering)),
+                               fit.values = fitted(mHovering))
+ggplot(data = weights_hovering , aes(y = abs.res, x = fit.values)) +
+  geom_point()+
+  geom_smooth(method = "loess", se = FALSE)
+var_model <- lm(abs.res ~ fit.values + I(fit.values^2), data = weights_hovering)
+var_model2 <- lm(abs.res ~ fit.values, data = weights_hovering)
+AIC(var_model, var_model2)
+# A quadratic relationship seems more appropriate to predict the residuals from the fitted vallyes
+weights_hovering$var <- predict(var_model)
+# Calculate weights as the inverse of the variance estimate
+weights_hovering$weights <- 1 / weights_hovering$var
+# The higher the variance, the less weight.
+# So less weight/importance given to high fitted values because they are less reliable = they have a strong error associated to them
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,],
+                  weights = weights_hovering$weights)
+plot(mHovering, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+plot(mHovering, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+anova(mHovering, ddf = "Kenward-Roger", type = 2)
+
+
+```
+
+It works for the adjusting the increasing variance with fitted values. But negative SumSq values for Tank, Wtf? 
+
 
 ::: 
 
