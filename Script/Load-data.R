@@ -126,10 +126,14 @@ data_IT <- tf(master[master$Interation.with.surface !=0 & !is.na(master$Interati
   mutate(Interaction.with.surface.type = factor(Interaction.with.surface.type))
 levels(data_IT$Interaction.with.surface.type)
 ## Group levels together
-data_IT$IT <- factor(data_IT$Interaction.with.surface.type, 
-                                                 labels = c(rep("Aggressive",8), rep("Bite",2), "Fold", rep("Head into",4),rep("Head shake/swim",5), "Bite",rep("Swim",2)))
+#data_IT$IT <- factor(data_IT$Interaction.with.surface.type, 
+# labels = c("Bite", "Swim into ground", "Swim into ground", "Swim into surface", "Swim into objects",
+           "Swim into walls", "Swim into water surface", ))
 
-ggplot(data_IT, aes(fill = Interaction.with.surface.type2, x = Tank))+
-  geom_bar(stat= "count",color=grey(0.4))+
-  theme(legend.position="bottom")+
-  ylab("Count of trials")
+# Hovering place
+data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 
+              c("Tank","Hovering.place","Fish","Filter","Time"), 
+              c("Hovering","Swimming"), # I have to specify two columns otherwise my function tf is not working
+              function(x) colSums(x, na.rm = TRUE)) %>% 
+  mutate(Hovering.place = fct_drop(Hovering.place),
+         Hovering.place = factor(Hovering.place, c("Above ground","Mid water column", "Just under surface", "Just under surface (under bubble nest)", "Inside barrel")))
