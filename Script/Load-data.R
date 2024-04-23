@@ -126,9 +126,15 @@ data_IT <- tf(master[master$Interation.with.surface !=0 & !is.na(master$Interati
   mutate(Interaction.with.surface.type = factor(Interaction.with.surface.type))
 levels(data_IT$Interaction.with.surface.type)
 ## Group levels together
-#data_IT$IT <- factor(data_IT$Interaction.with.surface.type, 
-# labels = c("Bite", "Swim into ground", "Swim into ground", "Swim into surface", "Swim into objects",
-           "Swim into walls", "Swim into water surface", ))
+new.levels <- c("Bite", "Swim into ground", "Swim into ground", "Swim into wall/object", "Swim into wall/object",
+                "Swim into wall/object", "Trash at the water surface", "Swim into wall/object", "Bite", "Bite",
+                "Swim into ground", rep("Swim into wall/object", 9), "Bite", "Swim into wall/object", "Swim into wall/object")
+### Check
+unique(data.frame(ori.levels = levels(data_IT$Interaction.with.surface.type), new.levels))
+data_IT$IT <- factor(data_IT$Interaction.with.surface.type, 
+labels = c("Bite", "Swim into ground", "Swim into ground", "Swim into wall/object", "Swim into wall/object",
+           "Swim into wall/object", "Trash at the water surface", "Swim into wall/object", "Bite", "Bite",
+           "Swim into ground", rep("Swim into wall/object", 9), "Bite", "Swim into wall/object", "Swim into wall/object"))
 
 # Hovering place
 data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 

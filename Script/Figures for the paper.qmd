@@ -19,10 +19,6 @@ plot_var <- function(data, variable){
                  geom = "errorbar",colour = "red", width = 0.15, alpha =  .75)+
     stat_summary(fun.y = mean,geom = "point", colour = "red", size = 3)
 }
-
-(plotA <- plot_var(data, "Swimming") +
-   ylab("Time spent swimming (sec)")+
-   ggtitle("A. Swimming"))
 ```
 
 # PCA
@@ -34,9 +30,9 @@ plot_var <- function(data, variable){
 ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
 ```
 
-# All behaviours
+# Tank 
 
-## Figure 1
+## Plot summary
 
 ```{r}
 (plot.tank <- plot1("Tank") + 
@@ -60,7 +56,7 @@ ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
 ggsave(plot1, filename = "Plots/Fig1.png",width = 8.11, height = 8.98)
 ```
 
-## Figure 2
+## One plot = one behaviour
 
 ```{r}
 (plotA <- plot_var(data, "Swimming") +
@@ -105,10 +101,12 @@ ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
 
 ```
 
-# By individual fish
-## All behaviours
+# Individual fish
+
+## Summary
+
 ```{r}
-(plotFish <-tf(data, grouping = "Fish", beh.cols, colMeans) %>% 
+(plot.fish1 <-tf(data, grouping = "Fish", beh.cols, colMeans) %>% 
   pivot_longer(cols = beh.cols , names_to ="Behaviour", values_to="time") %>% 
   mutate(Behaviour = fct_relevel(Behaviour, beh.cols),
          group = fct_collapse(Fish, "1" = levels(Fish)[1:7], "2" = levels(Fish)[8:13])) %>% 
@@ -120,24 +118,39 @@ ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
   theme(legend.position="top",
         strip.background = element_blank(),
         strip.text.x = element_blank()))
-ggsave(plotFish, filename = "Plots/FigFish.png", width = 8.27, height = 6.27)
+ggsave(plot.fish1, filename = "Plots/FigFish.png", width = 8.27, height = 6.27)
 ```
 
-## Each behaviour depending on tank by fish - Panel graphic
+## One plot = one behaviour
 
+```{r}
+(plot.lineA <- plot_var_fish(data, "Swimming") +
+   ylab("Time spent swimming (sec)")+
+   ggtitle("A. Swimming"))
+ggsave(plot.lineA, filename = "Plots/FigFishSwimming.png", width = 5.67, height = 6.37)
 
+(plot.lineB <- plot_var_fish(data, "Resting") +
+   ylab("Time spent resting (sec)")+
+   ggtitle("B. Resting"))
+ggsave(plot.lineB, filename = "Plots/FigFishResting.png", width = 5.67, height = 6.37)
+
+(plot.lineC <- plot_var_fish(subset(data, Hovering >0), "Hovering") +
+   ylab("Time spent hovering (sec)")+
+   ggtitle("C. Hovering"))
+ggsave(plot.lineC, filename = "Plots/FigFishHovering.png", width = 5.67, height = 6.37)
+```
+
+We tried the graph with rare behaviours such as Stereotypic swimming. But the results cannot be read as multiple individual lines were stacked at 0 (many fish never performed SS in any tank).
 
 # Resting place
 
-By tank  xxx
-By fish xxxx
 ```{r}
 (plotRPtank <- data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
    ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
    scale_fill_manual(values=palette_RP)+
    theme(legend.title = element_blank())+
-   ylab("% of time resting at the different places")+
+   ylab("% of resting time")+
    scale_y_continuous(labels=c(0,25,50,75,100))+
    ggtitle("A"))
 
@@ -146,7 +159,7 @@ By fish xxxx
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
     scale_fill_manual(values=palette_RP)+
     scale_y_continuous(labels=c(0,25,50,75,100)) +
-    ylab("% of time resting at the different places")+
+    ylab("% of resting time")+
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
           axis.title.y = element_blank())+
     ggtitle("B"))
@@ -157,3 +170,29 @@ ggsave(plotRP, filename = "Plots/FigRP.png", width = 6.07, height = 4.22)
 ```
 
 # Interaction with surface
+
+```{r}
+(plotITtank <- data_IT %>% group_by(Tank, IT) %>% summarise(Interation.with.surface = mean(Interation.with.surface)) %>% 
+   ggplot(., aes(y = Interation.with.surface, x = Tank,fill = IT))+
+   geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+   scale_fill_manual(values=palette_IT)+
+   theme(legend.title = element_blank())+
+   ylab("% of interaction time")+
+   scale_y_continuous(labels=c(0,25,50,75,100))+
+   ggtitle("A"))
+
+(plotITfish <- data_IT %>% group_by(Fish, IT) %>% summarise(Interation.with.surface = mean(Interation.with.surface)) %>% 
+    ggplot(., aes(y = Interation.with.surface, x = Fish,fill = IT, width=.75))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+    scale_fill_manual(values=palette_IT)+
+    scale_y_continuous(labels=c(0,25,50,75,100)) +
+    ylab("% of interaction time")+
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+          axis.title.y = element_blank())+
+    ggtitle("B"))
+
+(plotIT <- ggarrange(plotITtank,plotITfish, align = "h", widths = c(0.5, 1),
+                    common.legend = TRUE, legend = "top", nrow = 1))
+ggsave(plotRP, filename = "Plots/FigIT.png", width = 6.07, height = 4.22)
+```
+
