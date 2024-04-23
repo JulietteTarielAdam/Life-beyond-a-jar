@@ -89,6 +89,8 @@ plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3)
 plot1("Tank","Fish", main = data3, beh_cols = beh.cols3, palette = palette.beh3) +  facet_wrap_paginate(~Fish,ncol=2,nrow=2, page = 4) + ggtitle("Per fish")
 
 plot1("Time", main = data3, beh_cols = beh.cols3, palette = palette.beh3) + ggtitle("Per time")
+
+plot1("Order", main = data3, beh_cols = beh.cols3, palette = palette.beh3) + ggtitle("Tank order")
 ```
 
 ## Filter
@@ -166,30 +168,38 @@ plot_var_fish(data, "Swimming")
 
 ```{r}
 #| column: page
-mSwimming <- lmer(Swimming ~ Tank + Time + Filter + (1|Fish), data = data)
+mSwimming <- lmer(Swimming ~ Tank + Time + Filter + Order + (1|Fish), data = data)
+# Error message due to the fact that all trials with Tank = Barren are also Order = "5"
 anova(mSwimming, ddf = "Kenward-Roger", type = 2)
-calc_contrasts(mSwimming)
-emmeans(mSwimming, ~ Time) # estimated means of time spent swimming depending on the time of the day 
-emmeans(mSwimming, ~ Filter)
+contr_tank.size(mSwimming)
+contr_tank.enrich(mSwimming)
+# estimated means of time spent swimming depending on:
+emmeans(mSwimming, ~ Time) # time of day
+emmeans(mSwimming, ~ Filter) # filter
+rbind(emmeans(mSwimming, ~ Order, at = list(Tank = c("Jar", "Small", "Medium", "Large"),Order = c("1", "2", "3", "4"))),
+      emmeans(mSwimming, ~ Order, at = list(Tank = c("Barren"),Order = "5"))) # tank order
 ```
 
-Effect of Tank, Time and Filter! 
+Effect of Tank, Time, Filter and Order! 
 
-+ Tank. Large swam significantly more time than Jar, Small and Medium. Fish in Large swan 93 sec [CI 45, 140] more than Jar (over a 600 sec trial), 79 sec [CI 32, 126] more than Small, and 81 sec [CI 39, 122] more than Medium. In addition,  fish in Large swam significantly more time (58 sec [CI 16, 101]) than fish in Barren. 
++ Tank. Large swam significantly more time than Jar, Small and Medium. Fish in Large swan 92 sec [CI 46, 138] more than Jar (over a 600 sec trial), xx sec [CI xx, xx] more than Small, and xx sec [CI xx, xx] more than Medium. In addition,  fish in Large swam significantly more time (xx sec [CI xx, xx]) than fish in Barren. 
 + Time. Fish swim more in the morning than in the afternoon, especially at 7 am.
 + Filter. Fish swim more with a filter in their tank.
++ Order. All confidence intervals are overlapping so probably no significant difference between orders. It seems that fish swim more in their 2nd and 3rd tank.
+
++ Effect of Barren or tank order 5? The effect size of Tank (shown by the Sum Sq) is three times more than the effect size of Order. Max difference between orders 1-4 is 43 sec. Difference between Large and Barren/5 is 53. Effect of tank is stronger on time spent swimming, so it is likely the diff between Large and Barren/5 is due (at least party) to Tank.
 
 ## Between-fish diff
 
 ```{r}
 # Uncomment the 2 lines below if running the script for the first time
-## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 ## save(rpt.swimming, file = "Script/Repeatability rptR output/rpt.swimming")
 base::load("Script/Repeatability rptR output/rpt.swimming")
 summary(rpt.swimming)
 ```
 
-Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2 [95% CI 0.04, 0.35]). 
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2 [95% CI 0.06, 0.37]). 
 
 ## Diagnosis
 
@@ -226,28 +236,32 @@ plot_var_fish(data, "Resting")
 
 ```{r}
 #| column: page
-mResting <- lmer(Resting ~ Tank + Time + Filter + (1|Fish), data = data)
+mResting <- lmer(Resting ~ Tank + Time + Filter + Order + (1|Fish), data = data)
 anova(mResting, ddf = "Kenward-Roger", type = 2)
-calc_contrasts(mResting)
+contr_tank.size(mResting)
+contr_tank.enrich(mResting)
 emmeans(mResting, ~ Time)
+rbind(emmeans(mResting, ~ Order, at = list(Tank = c("Jar", "Small", "Medium", "Large"),Order = c("1", "2", "3", "4"))),
+      emmeans(mResting, ~ Order, at = list(Tank = c("Barren"),Order = "5")))
 ```
 
-Effect of Tank and Time.
+Effect of Tank, Time and Order.
 
-+ Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 110 sec [CI 39, 181] more than fish in Jar (over a 600 sec trial), and 114 sec [CI 53, 175] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
++ Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 109 sec [CI 40, 178] **less** time than fish in Jar (over a 600 sec trial), and xx sec [CI xx, xx] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
 + Time. Fish rest less time in the morning, especially at 7 am. In line with the PCA and the results of Swimming.
++ Order. All confidence intervals are overlapping so probably no significant difference between orders. It seems that fish rest more in their 1st and 4th tank.
 
 ## Between-fish diff
 
 ```{r}
 # Uncomment the 2 lines below if running the script for the first time
-## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 ## save(rpt.resting, file = "Script/Repeatability rptR output/rpt.resting")
 base::load("Script/Repeatability rptR output/rpt.resting")
 summary(rpt.resting)
 ```
 
-Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is OK 0.37 [95% CI 0.15, 0.56].
+Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is good 0.4 [95% CI 0.16, 0.58].
 
 ## Diagnosis
 
@@ -261,6 +275,8 @@ The model seems good.
 
 Just a plot with the amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials and fish. 
 
+Analysis only for Small, Medium and Large.
+
 ```{r}
 #| column: page
 #| echo: false
@@ -269,144 +285,33 @@ data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting))
   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
   scale_fill_manual(values=palette_RP)+
-  guides(fill = guide_legend(reverse = TRUE))
+  guides(fill = guide_legend(reverse = TRUE))+
+  ylab("% of time resting at the different places")+
+  scale_y_continuous(labels=c(0,25,50,75,100))
 
 data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Fish,fill = Resting.place))+
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
   scale_fill_manual(values=palette_RP)+
-  guides(fill = guide_legend(reverse = TRUE))
+  guides(fill = guide_legend(reverse = TRUE))+
+  ylab("% of time resting at the different places")+
+  scale_y_continuous(labels=c(0,25,50,75,100))
 ```
 
 From the graphs, we can see that fish use different places to rest, not only one type. They use all the different places available. It does not seem that there is a preferred resting place. 
 
+Interesting, fish avoided resting on filter. 48 trials with a filter in the tank (24 in Medium + 24 in Large) but only one trial were the fish rested on the filter for Medium and Large. Fish only rested on filter in Barren. 
+
+```{r}
+# Number of trials with a filter
+table(data$Tank, data$Filter)
+# Trials with resting on filter
+filter(master[,c(1:5,7:8)], Resting.place == "Filter")  
+```
+
+
 :::
 
-# Hovering
-
-::: {.panel-tabset}
-
-## Distribution 
-
-```{r}
-hist1(data$Hovering)
-table(data$Hovering==0)
-descdist(data$Hovering, boot = 1000, print = FALSE)
-quantile(data$Hovering)
-hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
-```
-
-Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened. So 204 trials where we could study the amount of time hovering in 204 trials. 
-
-We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occurred during the trial, zero otherwise).
-
-To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried different models described in "Analysis_Hovering". The best model was a linear mixed model on the amount of time spent hovering with weighted least squares.
-
-## Plot 
-
-```{r}
-#| warning: false
-# Effect of tank of the probability to hover during a trial
-plot_var_binary(data, "Hovering.bin")
-plot_var_binary_fish(data, "Hovering.bin")
-
-# Among the trials where the fish hovers, effect of tank on the amount of time hovering
-data %>% filter(Hovering >0) %>% 
-  plot_var(., "Hovering")
-data %>% filter(Hovering >0) %>% 
-  plot_var_fish(., "Hovering")
-```
-
-Both the probability to hover and the time spent hovering seems to be higher in Jar compared to the others. All fish besides Goblin hovered more in Jar compared to Small.
-
-## Generalised linear model 
-
-Y variable = probability to hover during a trial
-
-```{r}
-#| column: page
-mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
-
-glmmTMB:::Anova.glmmTMB(mHovering)
-
-emmeans(mHovering, ~ Time, type = "response")
-emmeans(mHovering, ~ Filter, type = "response")
-```
-
-No effect of Tank on the probability to hover during a trial, only an effect of Time and filter
-
-+ Time. Fish were less likely to hover in the afternoon.
-+ Filter. Fish were less likely to hover with a filter in their tank.
-
-```{r}
-mHovering_res <- simulateResiduals(mHovering)
-plot(mHovering_res)
-```
-
-The model seems good. 
-
-## Linear model
-
-Y variable = amount of time spent hovering during a trial. Only trials with hovering time > 0
-
-Linear model with weighted least squares
-
-```{r}
-mHovering2 <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000))
-
-anova(mHovering2)
-calc_contrasts(mHovering2)
-emmeans(mHovering2, ~ Time) # estimated means of time spent Hovering depending on the time of the day 
-emmeans(mHovering2, ~ Filter)
-```
-
-Effect of Tank, Time and Filter.
-
-+ Tank. Jar hovered significantly more time than Small, Medium and Large. Fish in Jar hovered 53 sec [CI 20, 85] more than Small (over a 600 sec trial), 53 sec [CI 20, 86] more than Medium, and 61 sec [CI 28, 93] more than Large. Fish in medium hovered more time than fish in Large. In addition, fish in Barren hovered significantly more time (22 sec [CI 9, 35]) than fish in Large.
-+ Time. Fish hovered more time in the middle of the day.
-+ Filter. Fish hovered less time with a filter in their tank.
-
-```{r}
-plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
-qqnorm(resid(mHovering2, type = "pearson"))
-qqline(resid(mHovering2, type = "pearson"))
-ranefPlot <- ranef(mHovering2, level = 1)
-qqnorm(ranefPlot$`(Intercept)`)
-qqline(ranefPlot$`(Intercept)`)
-```
-
-The model seems good besides the normality. But linear models are robust to the normality assumption (= we can still draw true inference).
-
-## Hovering place
-
-Just a plot with where the fish hovers at the different places depending on the tank.
-
-```{r}
-#| column: page
-#| echo: false
-#| message: false
-data_HP %>% 
-  filter(!is.na(Hovering.place)) %>% 
-  group_by(Tank, Hovering.place) %>% 
-  summarise(Hovering = mean(Hovering)) %>% 
-  ggplot(., aes(y = Hovering, x = Tank,fill = Hovering.place))+
-    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-  scale_fill_manual(values=palette_HP)+
-  guides(fill = guide_legend(reverse = TRUE))
-
-data_HP %>% 
-  filter(!is.na(Hovering.place)) %>% 
-  group_by(Fish, Hovering.place) %>% 
-  summarise(Hovering = mean(Hovering)) %>% 
-  ggplot(., aes(y = Hovering, x = Fish,fill = Hovering.place))+
-    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-  scale_fill_manual(values=palette_HP)+
-  guides(fill = guide_legend(reverse = TRUE))
-```
-
-Fish used different places for hovering in all tanks.
-
-:::
 
 # Foraging
 
@@ -438,40 +343,39 @@ plot_var_binary_fish(data, "Foraging.bin")
 
 ```{r}
 #| column: page
-mForaging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+mForaging <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data, family =binomial)
 
 glmmTMB:::Anova.glmmTMB(mForaging)
 
-calc_contrasts_bin(mForaging)
+contr_tank.size_bin(mForaging)
+contr_tank.enrich_bin(mForaging)
 # example of differences between Jar and Large
 ## Contrast estimate
-1/0.08
-## Lower CI
-1/0.437
+1/0.09
 ## Upper CI
-1/0.014
+1/0.015
+## Lower CI
+1/0.493
 ```
 
 Effect of Tank. 
 
 As a reminder, an odds.ratio < 1 between tank X vs tank Y means the probability of foraging during a trial in tank X is smaller that the probability of foraging during a trial in tank Y. An odd ratio for instance of 0.2 means that a fish is (1 / 0.2) = five times more likely to forage during a trial in tank Y than in Tank X. If we imagine 5 trials, fish will forage on average during 1 trial out of 5 in Tank X whereas fish will forage on average during 5 trials out of 5 in Tank Y. 
 
-+ Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 13 times [CI 2, 71] more likely to forage during a trial than fish in Jar, 25 times [CI 4, 166] than fish in Small, and 4 times [CI 1, 13] than fish in Medium. In addition, fish were 15 times [CI 3, 63] more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium.
++ Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 11 times [CI 2, 67] more likely to forage during a trial than fish in Jar, xx times [CI xx, xx] than fish in Small, and xx times [CI xx, xx] than fish in Medium. In addition, fish were xx times [CI xx, xx] more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium.
 
 ## Between-fish diff
 
 ```{r}
-# Attempt to calculate repeatability
-rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
-# attempt with package glmer rather than glmmTMB
-mForaging2 <- glmer(Foraging.bin ~ Tank + Time + Filter + (1|Fish), data = data, family = "binomial")
+rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
+# can calculate repeatability but not the CI. I tried using bootstrap and permutation.
 
 # Likelihood ratio test of random effect
-mForaging0 <- glmmTMB(Foraging.bin ~ Tank + Time + Filter, data = data, family =binomial)
+mForaging0 <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
 anova(mForaging0, mForaging)
 ```
 
-Error when calculating the repeatability with rptR. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable. I tried to use the lmer package to calculate the repeatability with rptR but the model failed to converge when using glmer().
+Can calculate the repeatability but not its CI. Cannot calculate repeatability for Stereotypic swimming anyway. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable.
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of foraging. 
 
@@ -519,31 +423,31 @@ Huge variability between fish as always. Some fish never performed stereotypic s
 
 ```{r}
 #| column: page
-mSS <- glmmTMB(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+mSS <- glmmTMB(SS.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data, family =binomial)
 
 glmmTMB:::Anova.glmmTMB(mSS)
 
-calc_contrasts_bin(mSS)
+contr_tank.size_bin(mSS)
+contr_tank.enrich_bin(mSS)
 ```
 
 Effect of Tank. 
 
-+ Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Fish in Small were 33 times [CI 4, 333] more likely to perform stereotypic swimming during a trial than fish in Jar.
++ Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Fish in Small were xx times [CI xx, xx] more likely to perform stereotypic swimming during a trial than fish in Jar. Almost significant difference between Large and Barren: Fish in Barren were 3.4 times [CI xx, xx] more likely to perform stereotypic swimming during a trial than fish in Large.
 
 ## Between-fish diff
 
 ```{r}
 # Attempt to calculate repeatability
-rpt.SS <- rpt(SS.bin ~ Tank + Time + Filter + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
-# attempt with package glmer rather than glmmTMB
-mSS2 <- glmer(SS.bin ~ Tank + Time + Filter + (1|Fish), data = data, family = "binomial")
+rpt.SS <- rpt(SS.bin ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
+# error
 
 # Likelihood ratio test of random effect
 mSS0 <- glmmTMB(SS.bin ~ Tank + Time + Filter, data = data, family =binomial)
 anova(mSS0, mSS)
 ```
 
-Error when calculating the repeatability with rptR, idem Foraging. 
+Error when calculating the repeatability with rptR. 
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of stereotypic swimming. 
 
@@ -638,21 +542,22 @@ Idem analysis binary generalised linear models.
 
 ```{r}
 #| column: page
-mInteracting <- glmmTMB(Interacting.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+mInteracting <- glmmTMB(Interacting.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data, family =binomial)
 
 glmmTMB:::Anova.glmmTMB(mInteracting)
 
-calc_contrasts_bin(mInteracting)
+contr_tank.size_bin(mInteracting)
+contr_tank.enrich_bin(mInteracting)
 ```
 
 Effect of Tank.
 
-+ Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). Fish in Jar were 4 times [CI 1, 18] more likely to interact with the surface during a trial than fish in Large, and Fish in Medium were 6 times [CI 2, 23] then fish in Large. In addition, fish were 3 times [CI 1, 12] more likely to interact with a surface during a trial in Barren than in Large. 
++ Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). Fish in Jar were x times [CI xx, xx] more likely to interact with the surface during a trial than fish in Large, and Fish in Medium were x times [CI xx, xx] then fish in Large. In addition, fish were xx times [CI xx, xx] more likely to interact with a surface during a trial in Barren than in Large. 
 
 ## Between-fish diff
 
 ```{r}
-mInteracting0 <- glmmTMB(Interacting.bin ~ Tank + Time + Filter, data = data, family =binomial)
+mInteracting0 <- glmmTMB(Interacting.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
 anova(mInteracting0, mInteracting)
 ```
 
@@ -695,7 +600,6 @@ ggplot(data_IT, aes(fill = Interaction.with.surface.type2, x = Tank))+
     geom_bar(stat= "count",color=grey(0.4))+
     theme(legend.position="bottom")+
     ylab("Count of trials")
-
 ```
 
 :::
@@ -725,22 +629,24 @@ There are 1 trial out of 5 where there was nest building. Analysis with binary g
 
 ```{r}
 #| column: page
-mNest <- glmmTMB(Nest.bin ~ Tank + Time + Filter + (1|Fish), data = data, family =binomial)
+mNest <- glmmTMB(Nest.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data, family =binomial)
 
 glmmTMB:::Anova.glmmTMB(mNest)
 
-calc_contrasts_bin(mNest)
+contr_tank.size_bin(mNest)
+contr_tank.enrich_bin(mNest)
 emmeans(mNest, ~ Filter, type = "response")
 ```
 
-Effect of Tank and Filter.
-+ Tank. Despite a significant effect of Tank, no contrasts were statistically significant. This is usual when you have a weakly significant fixed effect of a factor (0.01 < p-value < 0.05) which has a lot of different levels. In terms of trend, fish in Jar seemed less likely to build a nest compared to Small/Medium/Large. In addition, fish in Barren were less likely to build nest than fish in Large. 
+Effect of Filter only.
+
++ Tank. Almost significant.
 + Filter. Fish were more likely to build a nest without a filter in their tank.
 
 ## Between-fish diff
 
 ```{r}
-mNest0 <- glmmTMB(Nest.bin ~ Tank + Time + Filter, data = data, family =binomial)
+mNest0 <- glmmTMB(Nest.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
 anova(mNest0, mNest)
 ```
 
@@ -759,6 +665,132 @@ plotResiduals(mNest_res, form = data$Filter)
 The model seems good.
 
 :::
+
+# Hovering
+
+To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried different models described in "Analysis_Hovering". The best model was a linear mixed model on the amount of time spent hovering with weighted least squares (WLS). We had to use WLS because the error variance was increasing with the fitted values-higher error variance associated with high hovering time values. It was not possible to use WLS with the lmer package so we had to use the nlme package. The nlme package does not handle confounding levels of two factors - the fact that Tank = Barren is the same as Order = 5. So we had to remove Order from the analysis. The addition of Order was not changing the analysis outcomes in the other models. 
+
+::: {.panel-tabset}
+
+## Distribution 
+
+```{r}
+hist1(data$Hovering)
+table(data$Hovering==0)
+descdist(data$Hovering, boot = 1000, print = FALSE)
+quantile(data$Hovering)
+hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
+```
+
+Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened. So 204 trials where we could study the amount of time hovering in 204 trials. 
+
+We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occurred during the trial, zero otherwise).
+
+## Plot 
+
+```{r}
+#| warning: false
+# Effect of tank of the probability to hover during a trial
+plot_var_binary(data, "Hovering.bin")
+plot_var_binary_fish(data, "Hovering.bin")
+
+# Among the trials where the fish hovers, effect of tank on the amount of time hovering
+data %>% filter(Hovering >0) %>% 
+  plot_var(., "Hovering")
+data %>% filter(Hovering >0) %>% 
+  plot_var_fish(., "Hovering")
+```
+
+Both the probability to hover and the time spent hovering seems to be higher in Jar compared to the others. All fish besides Goblin hovered more in Jar compared to Small.
+
+## Generalised linear model 
+
+Y variable = probability to hover during a trial
+
+```{r}
+#| column: page
+mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data, family =binomial)
+
+glmmTMB:::Anova.glmmTMB(mHovering)
+
+emmeans(mHovering, ~ Time, type = "response")
+emmeans(mHovering, ~ Filter, type = "response")
+```
+
+No effect of Tank on the probability to hover during a trial, only an effect of Time and Filter
+
++ Time. Fish were more likely to hover in the morning.
++ Filter. Fish were less likely to hover with a filter in their tank.
+
+```{r}
+mHovering_res <- simulateResiduals(mHovering)
+plot(mHovering_res)
+```
+
+The model seems good. 
+
+## Linear model
+
+Y variable = amount of time spent hovering during a trial. Only trials with hovering time > 0
+
+```{r}
+mHovering2 <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0, ], weights = varPower(), control = lmeControl(maxIter = 20000))
+anova(mHovering2)
+contr_tank.size(mHovering2)
+contr_tank.enrich(mHovering2)
+emmeans(mHovering2, ~ Time)
+emmeans(mHovering2, ~ Filter)
+```
+
+Effect of Tank, Time and Filter.
+
++ Tank. Jar hovered significantly more time than Small, Medium and Large. Fish in Jar hovered 53 sec [CI 20, 85] more than Small (over a 600 sec trial), 53 sec [CI 20, 86] more than Medium, and 61 sec [CI 28, 93] more than Large. Fish in medium hovered more time than fish in Large. In addition, fish in Barren hovered significantly more time (22 sec [CI 12, 35]) than fish in Large.
++ Time. Fish hovered more time in the middle of the day.
++ Filter. Fish hovered less time with a filter in their tank.
+
+```{r}
+plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+plot(mHovering2, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+qqnorm(resid(mHovering2, type = "pearson"))
+qqline(resid(mHovering2, type = "pearson"))
+ranefPlot <- ranef(mHovering2, level = 1)
+qqnorm(ranefPlot$`(Intercept)`)
+qqline(ranefPlot$`(Intercept)`)
+```
+
+The model seems good besides the normality. But linear models are robust to the normality assumption (= we can still draw true inference).
+
+## Hovering place
+
+Just a plot with where the fish hovers depending on the tank.
+
+```{r}
+#| column: page
+#| echo: false
+#| message: false
+data_HP %>% 
+  filter(!is.na(Hovering.place)) %>% 
+  group_by(Tank, Hovering.place) %>% 
+  summarise(Hovering = mean(Hovering)) %>% 
+  ggplot(., aes(y = Hovering, x = Tank,fill = Hovering.place))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_HP)+
+  guides(fill = guide_legend(reverse = TRUE))
+
+data_HP %>% 
+  filter(!is.na(Hovering.place)) %>% 
+  group_by(Fish, Hovering.place) %>% 
+  summarise(Hovering = mean(Hovering)) %>% 
+  ggplot(., aes(y = Hovering, x = Fish,fill = Hovering.place))+
+    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
+  scale_fill_manual(values=palette_HP)+
+  guides(fill = guide_legend(reverse = TRUE))
+```
+
+Fish used different places for hovering in all tanks.
+
+:::
+
 
 # Up and down 
 
@@ -789,16 +821,17 @@ We can do different models:
 + Look simply at the actual time spent up. Fit a normal distribution. The response variable can be adjusted by the fact that the trial were not perfectly 600 sec. $adj.up= \frac{\text{time spent up} * 600}{\text{trial total duration}}$. It is what has been done.
 
 ```{r}
-mUp <- lmer(adj.up ~ Tank + Time + Filter + (1|Fish), data = dataUpDown)
+mUp <- lmer(adj.up ~ Tank + Time + Filter + Order + (1|Fish), data = dataUpDown)
 anova(mUp, ddf = "Kenward-Roger", type = 2)
-calc_contrasts(mUp)
+contr_tank.size(mUp)
+contr_tank.enrich(mUp)
 emmeans(mUp, ~ Time) # estimated means of time spent swimming depending on the time of the day 
 emmeans(mUp, ~ Filter) # estimated means of time spent swimming depending on the time of the day
 ```
 
 Effect of Tank, Time and Filter. 
 
-+ Tank. The only statistically significant difference is in between Small and Medium: Fish in Small tank spent on average 103 more seconds [25, 181 95% CI] on the upper half of the tank compared to fish in Medium tanks.
++ Tank. Statistically significant difference between Small and Medium/Jar: Fish in Small tank spent on average 103 more seconds [95% CI 26, 181] on the upper half of the tank compared to fish in Medium tanks. At the opposite, Fish in Small tank spent on average 71 more seconds [95% CI 26, 181] on the lower half of the tank compared to fish in Jar tanks. 
 + Time. Fish spent more time on the upper half of the tank in the morning.
 + Filter. Fish spent more time on the upper half of the tank with a filter in their tank.
 
@@ -811,20 +844,6 @@ lm_diagnosis(mUp)
 The model seems good.
 
 :::
-
-# Conclusion
-
-What we can say first is that there is a effect of the Tank on all behaviours, the tank is there having a big influence on the betta's behaviour. Then, it seems that we have three groups for the Jar/Small/Medium/Large
-
-+ Jar with less likely to build a nest and less likely to perform stereotypic swimming compared to the others
-+ Small and Medium
-+ Large with more time swimming, less time resting, more likely to forage and less likely to interact with the surface
-
-And Large and Barren are two different groups
-+ Barren with less likely to build a nest
-+ Large with more time swimming, more likely to forage and less likely to interact with the surface
-
-Fianlly, we can say that each fish behave pretty uniquely. 
 
 # R version 
 

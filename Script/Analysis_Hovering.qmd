@@ -20,13 +20,16 @@ knitr:
 source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
+data2 <- data[data$Hovering>0, ]
 ```
 
 To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried:
-+ glm with zero and zero-inflated poisson distribution, but the fit was not good.
-+ a transformation log(x +1), see below, but only a log(x+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
-+ a linear model on the remaining 204 trials during which hovering happened. But the variance of residuals was increasing with the fitted values.
-+  a linear model with weighted least squares to stabilise the variance accross the fitted values. The normality was not great but ANOVA are robust to the assumption of normality. It is the model we chose. 
+
++ glm with poisson or zero-inflated poisson distribution, but the fit was not good.
++ a transformation log(hovering +1), see below, but only a log(hovering+103) was good enough to achieve normal distribution. But there was a huge problem in hetereogeneity of variance with this model. 
++ a linear model on the remaining 204 trials during which hovering happened. But the variance of residuals was increasing with the fitted hovering time values.
++  a linear model with weighted least squares to stabilise the variance accross the fitted values. The normality was not great but ANOVA are robust to the assumption of normality. It is the model we chose. We had to use the nlme package for this but it does not allow for rank deficient models.
++ We tried to implement weighted least squares with the lmer package with no success. 
 
 ::: {.panel-tabset}
 
@@ -87,9 +90,9 @@ check_model(mHovering, check = "normality")
 check_model(mHovering, check = "homogeneity")
 ```
 
-We had to go log(y + 103) which is not a problem per se, because the value to add depends on the scale of the variable. Hovering varies between 0 and 600. 
+We had to go all the way to log(y + 103) which is not a problem per se, because the value to add depends on the scale of the variable. Hovering varies between 0 and 600. 
 
-But anyway the fit is not good with increase of variance in residuals with fitted values.
+But anyway the fit is not good with an increase of variance in residuals with fitted values.
 
 # Linear model
 
@@ -98,26 +101,100 @@ Y variable = amount of time spent hovering during a trial.
 Only considering positive hovering data Y > 0 
 
 ```{r}
-mHovering <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering>0,])
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data2)
 lm_diagnosis(mHovering)
-lm_results(mHovering)
+plotResiduals(mHovering, form =  data2$Tank)
+
 ```
 
-Problem homogeneity of variance, increase of residual variance with fitted values
+Problem homogeneity of variance, increase of residual variance with fitted values. 
 
-# Linear model with power 
+# Linear model with WLS
 
 In Weighted Least Squares (WLS, each observation is given a weight inversely proportional to its variance, helping to stabilize the variance across the fitted values.
 
 ```{r}
-mHovering <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000))
+mHovering <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data2, weights = varPower(), control = lmeControl(maxIter = 20000))
 plot(mHovering, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
 qqnorm(resid(mHovering, type = "pearson"))
 qqline(resid(mHovering, type = "pearson"))
 ranefPlot <- ranef(mHovering, level = 1)
 qqnorm(ranefPlot$`(Intercept)`)
 qqline(ranefPlot$`(Intercept)`)
+boxplot(resid(mHovering, type = "pearson")~ Tank, data =  data2)
 ```
 
-::: 
+The normality is not great but ANOVA are robust to the assumption of normality.
 
+However, the model is not working when including Order. The nlme package does not handle rank-deficient models. The lmer does not handle increasing error variance with fitted values automatically. Below I tried to implement increasing error variance with fitted values using lmer package.
+
+# Ajusted weigthts lmer
+
+::: {.panel-tabset}
+
+## Weights based on residual variance
+
+```{r}
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2)
+anova(mHovering, ddf = "Kenward-Roger", type = 2)
+# calculating weights
+weights_hovering <- data.frame(abs.res = abs(residuals(mHovering)),
+                               fit.values = fitted(mHovering))
+ggplot(data = weights_hovering , aes(y = abs.res, x = fit.values)) +
+  geom_point()+
+  geom_smooth(method = "loess", se = FALSE)
+var_model <- lm(abs.res ~ fit.values + I(fit.values^2), data = weights_hovering)
+var_model2 <- lm(abs.res ~ fit.values, data = weights_hovering)
+AIC(var_model, var_model2)
+# A quadratic relationship seems more appropriate to predict the residuals from the fitted values
+weights_hovering$var <- predict(var_model)^2
+# Calculate weights as the inverse of the variance estimate
+weights_hovering$weights <- 1 / weights_hovering$var
+# The higher the variance, the less weight.
+# So less weight/importance given to high fitted values because they are less reliable = they have a strong error associated to them
+mHovering2 <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2, 
+                  weights = weights_hovering$weights)
+plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+plot(mHovering2, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+anova(mHovering2, ddf = "Kenward-Roger", type = 2)
+```
+
+It worked: No more increasing variance with fitted values. But negative SumSq values for Tank, how is it possible?  
+
+2nd trial with bigger weights
+
+```{r}
+weights_hovering$SE <- predict(var_model)
+weights_hovering$weights2 <- 1 / weights_hovering$SE
+mHovering3 <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2, 
+                  weights = weights_hovering$weights2)
+plot(mHovering3, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+anova(mHovering3, ddf = "Kenward-Roger", type = 2)
+```
+
+If using higher weights, no negative value of SS but it is not fixing the problem of residuals. 
+
+## Weights based on group tank
+
+```{r}
+with(data2, boxplot(Hovering ~ Tank))
+(tank.var <- with(data2,
+                       tapply(Hovering,Tank, var)))
+```
+
+Twice more variance for Jar. It sounds logical as it is one of the only group where fish often perform  hovering. Creating the problem in residuals? Adjusting the weights depending on tank
+
+```{r}
+# Creating weights inversely proportional to the estimated variances
+weights <- with(data2, 1 / tank.var[Tank])
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2, weights = weights)
+plot(mHovering, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+plot(mHovering, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+anova(mHovering, ddf = "Kenward-Roger", type = 2)
+```
+
+Again negative Sum of Squares and not fixing the problem in the residual variance
+
+:::
+
+:::

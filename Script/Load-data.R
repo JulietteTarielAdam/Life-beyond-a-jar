@@ -26,7 +26,7 @@ library(nlme) # for the linear model of Hovering with weighted least squares
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
 
 # change order or name of factor levels
-master$Order.fac <- factor(master$Order)
+master$Order <- factor(master$Order)
 master$Tank <- factor(master$Tank, levels = c("Jar", "Small", "Medium", "Large", "Barren")) 
 master$Time <- factor(master$Time, levels = c("7:00 AM", "10:00 AM", "2:00 PM", "6:00 PM"))
 levels(master$Filter)
@@ -104,13 +104,37 @@ data$Interacting.bin <- factor(ifelse(data$Interation.with.surface != 0, "Yes", 
 data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
 
 # Resting place
-data_RP <- tf(master[master$Resting !=0 & !is.na(master$Resting),], 
-              c("Tank","Resting.place","Fish","Filter","Time"), 
+## Analysis only for Small, Medium and Large
+## Concatenate "Plant leaves" and "Under or against plant" together
+## Concatenate "Inside barrel" and "On or against barrel" together
+data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar") %>% 
+  filter(Resting !=0, !is.na(Resting))
+data_RP <- tf(data_RP,
+              c("Tank","Resting.place","Fish","Filter","Time","Order"),
               c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
+              function(x) colSums(x, na.rm = TRUE)) %>%
+  filter(Resting.place!= "N/A") %>%
+  mutate(Resting.place = factor(Resting.place,
+levels = c("Floor","Surface","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
+labels = c("Floor","Surface", "Plant",  "Plant", "Barrel", "Barrel", "Filter")))
+
+# Interaction.with.surface types
+data_IT <- tf(master[master$Interation.with.surface !=0 & !is.na(master$Interation.with.surface),], 
+              c("Tank","Interaction.with.surface.type","Fish","Filter","Time"), 
+              c("Interation.with.surface","Swimming"), # I have to specify two columns otherwise my function tf is not working
               function(x) colSums(x, na.rm = TRUE)) %>% 
-  filter(Resting.place!= "N/A") %>% 
-  mutate(Resting.place = fct_drop(Resting.place),
-         Resting.place = factor(Resting.place, c("Floor","Surface","Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter")))
+  mutate(Interaction.with.surface.type = factor(Interaction.with.surface.type))
+levels(data_IT$Interaction.with.surface.type)
+## Group levels together
+new.levels <- c("Bite", "Swim into ground", "Swim into ground", "Swim into wall/object", "Swim into wall/object",
+                "Swim into wall/object", "Trash at the water surface", "Swim into wall/object", "Bite", "Bite",
+                "Swim into ground", rep("Swim into wall/object", 9), "Bite", "Swim into wall/object", "Swim into wall/object")
+### Check
+unique(data.frame(ori.levels = levels(data_IT$Interaction.with.surface.type), new.levels))
+data_IT$IT <- factor(data_IT$Interaction.with.surface.type, 
+labels = c("Bite", "Swim into ground", "Swim into ground", "Swim into wall/object", "Swim into wall/object",
+           "Swim into wall/object", "Trash at the water surface", "Swim into wall/object", "Bite", "Bite",
+           "Swim into ground", rep("Swim into wall/object", 9), "Bite", "Swim into wall/object", "Swim into wall/object"))
 
 # Hovering place
 data_HP <- tf(master[master$Hovering !=0 & !is.na(master$Hovering),], 

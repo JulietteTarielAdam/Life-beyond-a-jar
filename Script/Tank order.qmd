@@ -101,6 +101,7 @@ AIC(mOrder.Swimming,mSwimming)
 Significant effect of tank order + The best model is the one with tank order (in terms of AIC) on the full dataset or dataset without Barren => Tank order needs to be included in the model... 
 
 Good news:
+
 + I found a way to calculate contrasts among Jar, Small, Medium and Large on the model with all data!
 + I found a way to calculate the contrast between contrast Large (estimated across Orders 1 to 4) and Barren at Order 5.
 + Still an effect of tank when tank order is included
@@ -158,11 +159,3 @@ AIC(mOrder.SS,mSS)
 ```
 
 Idem Foraging
-
-# Dragon
-
-What happen to Dragon during its exception of the first tank it went into? Do we consider the second tank it went into as tank order = 1 or tank order = 2? 
-
-# Conclusion
-
-I think we need to include Tank order in the model... A bit of a pain. It took me a long time to figure out how to calculate estimated means and contrasts on the new models that are rank-deficient factorial ANOVA, but I did it! 
