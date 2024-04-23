@@ -193,6 +193,6 @@ ggsave(plotRP, filename = "Plots/FigRP.png", width = 6.07, height = 4.22)
 
 (plotIT <- ggarrange(plotITtank,plotITfish, align = "h", widths = c(0.5, 1),
                     common.legend = TRUE, legend = "top", nrow = 1))
-ggsave(plotRP, filename = "Plots/FigIT.png", width = 6.07, height = 4.22)
+ggsave(plotIT, filename = "Plots/FigIT.png", width = 6.07, height = 4.22)
 ```
 
