@@ -20,6 +20,7 @@ knitr:
 source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
+data2 <- data[data$Hovering>0, ]
 ```
 
 To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried:
@@ -98,35 +99,41 @@ Y variable = amount of time spent hovering during a trial.
 Only considering positive hovering data Y > 0 
 
 ```{r}
-mHovering <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering>0,])
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + (1|Fish), data = data2)
 lm_diagnosis(mHovering)
-plotResiduals(mHovering, form =  data[data$Hovering>0,]$Tank)
+plotResiduals(mHovering, form =  data2$Tank)
 
 ```
 
 Problem homogeneity of variance, increase of residual variance with fitted values
 
-# Linear model with power 
+# Linear model with WLS
 
 In Weighted Least Squares (WLS, each observation is given a weight inversely proportional to its variance, helping to stabilize the variance across the fitted values.
 
 ```{r}
-mHovering <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0,], weights = varPower(), control = lmeControl(maxIter = 20000))
+mHovering <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data2, weights = varPower(), control = lmeControl(maxIter = 20000))
 plot(mHovering, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
 qqnorm(resid(mHovering, type = "pearson"))
 qqline(resid(mHovering, type = "pearson"))
 ranefPlot <- ranef(mHovering, level = 1)
 qqnorm(ranefPlot$`(Intercept)`)
 qqline(ranefPlot$`(Intercept)`)
-boxplot(resid(mHovering, type = "pearson")~ Tank, data =  data[data$Hovering>0,])
+boxplot(resid(mHovering, type = "pearson")~ Tank, data =  data2)
 ```
 
 The normality is not great but ANOVA are robust to the assumption of normality.
 
 However, the model is not working when including Order. The nlme package does not handle rank-deficient models. The lmer does not handle increasing error variance with fitted values automatically... Below I tried to implement increasing error variance with fitted values using lmer package.
 
+# Ajusted weigthts lmer
+
+## Calculating weights depending on residual variance
+
 ```{r}
-mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,])
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2)
+anova(mHovering2, ddf = "Kenward-Roger", type = 2)
+
 weights_hovering <- data.frame(abs.res = abs(residuals(mHovering)),
                                fit.values = fitted(mHovering))
 ggplot(data = weights_hovering , aes(y = abs.res, x = fit.values)) +
@@ -136,22 +143,48 @@ var_model <- lm(abs.res ~ fit.values + I(fit.values^2), data = weights_hovering)
 var_model2 <- lm(abs.res ~ fit.values, data = weights_hovering)
 AIC(var_model, var_model2)
 # A quadratic relationship seems more appropriate to predict the residuals from the fitted vallyes
-weights_hovering$var <- predict(var_model)
+weights_hovering$var <- predict(var_model)^2
 # Calculate weights as the inverse of the variance estimate
 weights_hovering$weights <- 1 / weights_hovering$var
 # The higher the variance, the less weight.
 # So less weight/importance given to high fitted values because they are less reliable = they have a strong error associated to them
-mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,],
+mHovering2 <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2, 
                   weights = weights_hovering$weights)
+plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+plot(mHovering2, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+anova(mHovering2, ddf = "Kenward-Roger", type = 2)
+
+# 2nd trial with bigger weights
+weights_hovering$SE <- predict(var_model)
+weights_hovering$weights2 <- 1 / weights_hovering$SE
+mHovering3 <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2, 
+                  weights = weights_hovering$weights2)
+plot(mHovering3, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+anova(mHovering3, ddf = "Kenward-Roger", type = 2)
+```
+
+It worked: No more increasing variance with fitted values. But negative SumSq values for Tank, Wtf?  
+
+If using higher weights, no negative value of SS but it is not fixing the problem of residuals. 
+
+## Adjusted weight depending on group tank
+
+
+```{r}
+with(data2, boxplot(Hovering ~ Tank))
+(tank.var <- with(data2,
+                       tapply(Hovering,Tank, var)))
+```
+
+Twice more variance for Jar. It sounds logical as it is one of the only group where fish perform often hovering. Creating the problem in residuals? Adjusting the weights depending on 
+
+```{r}
+# Creating weights inversely proportional to the estimated variances
+weights <- with(data2, 1 / tank.var[Tank])
+mHovering <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data2, weights = weights)
 plot(mHovering, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
 plot(mHovering, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
 anova(mHovering, ddf = "Kenward-Roger", type = 2)
-
-
 ```
 
-It works for the adjusting the increasing variance with fitted values. But negative SumSq values for Tank, Wtf? 
-
-
-::: 
-
+Again negative SS

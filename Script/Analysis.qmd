@@ -664,6 +664,8 @@ The model seems good.
 
 # Hovering
 
+To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried different models described in "Analysis_Hovering". The best model was a linear mixed model on the amount of time spent hovering with weighted least squares (WLS). We had to use WLS because the error variance was increasing with the fitted values-higher error variance associated with high hovering time values. It was not possible to use WLS with the lmer package so we had to use the nlme package. The nlme package does not handle confounding levels of two factors - the fact that Tank = Barren is the same as Order = 5. So we had to remove Order from the analysis. The addition of Order was not changing the analysis outcomes in the other models. 
+
 ::: {.panel-tabset}
 
 ## Distribution 
@@ -679,8 +681,6 @@ hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
 Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened. So 204 trials where we could study the amount of time hovering in 204 trials. 
 
 We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occurred during the trial, zero otherwise).
-
-To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried different models described in "Analysis_Hovering". The best model was a linear mixed model on the amount of time spent hovering with weighted least squares.
 
 ## Plot 
 
@@ -729,33 +729,24 @@ The model seems good.
 
 Y variable = amount of time spent hovering during a trial. Only trials with hovering time > 0
 
-Linear model with weighted least squares. See details for the weights'calculation on Analysis_Hovering.
-
 ```{r}
-# temporary model to calculate weights to handle increasing error variance with fitted values
-mHovering2_temp <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,])
-weights_hovering <- data.frame(abs.res = abs(residuals(mHovering2_temp )),
-                               fit.values = fitted(mHovering2_temp))
-weights_hovering$var <- predict(lm(abs.res ~ fit.values + I(fit.values^2), data = weights_hovering))^2
-weights_hovering$weights <- 1 / weights_hovering$var
-
-# Final model 
-mHovering2 <- lmer(Hovering ~ Tank + Time + Filter + Order + (1 | Fish), data = data[data$Hovering>0,],
-                  weights = weights_hovering$weights)
-anova(mHovering2, type = 2)
+mHovering2 <- lme(Hovering ~ Tank + Time + Filter, random = ~1 | Fish, data = data[data$Hovering>0, ], weights = varPower(), control = lmeControl(maxIter = 20000))
+anova(mHovering2)
 contr_tank.size(mHovering2)
-emmeans(mHovering2, ~ Time) # estimated means of time spent Hovering depending on the time of the day 
+contr_tank.enrich(mHovering2)
+emmeans(mHovering2, ~ Time)
 emmeans(mHovering2, ~ Filter)
 ```
 
 Effect of Tank, Time and Filter.
 
-+ Tank. Jar hovered significantly more time than Small, Medium and Large. Fish in Jar hovered 53 sec [CI 20, 85] more than Small (over a 600 sec trial), 53 sec [CI 20, 86] more than Medium, and 61 sec [CI 28, 93] more than Large. Fish in medium hovered more time than fish in Large. In addition, fish in Barren hovered significantly more time (22 sec [CI 9, 35]) than fish in Large.
++ Tank. Jar hovered significantly more time than Small, Medium and Large. Fish in Jar hovered 53 sec [CI 20, 85] more than Small (over a 600 sec trial), 53 sec [CI 20, 86] more than Medium, and 61 sec [CI 28, 93] more than Large. Fish in medium hovered more time than fish in Large. In addition, fish in Barren hovered significantly more time (22 sec [CI 12, 35]) than fish in Large.
 + Time. Fish hovered more time in the middle of the day.
 + Filter. Fish hovered less time with a filter in their tank.
 
 ```{r}
 plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
+plot(mHovering2, abs(resid(., type = "pearson")) ~ fitted(.), aspect = 1, pch = 21, abline = 0)
 qqnorm(resid(mHovering2, type = "pearson"))
 qqline(resid(mHovering2, type = "pearson"))
 ranefPlot <- ranef(mHovering2, level = 1)
