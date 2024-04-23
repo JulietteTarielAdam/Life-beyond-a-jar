@@ -633,11 +633,13 @@ mNest <- glmmTMB(Nest.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data
 
 glmmTMB:::Anova.glmmTMB(mNest)
 
-calc_contrasts_bin(mNest)
+contr_tank.size_bin(mNest)
+contr_tank.enrich_bin(mNest)
 emmeans(mNest, ~ Filter, type = "response")
 ```
 
 Effect of Filter only.
+
 + Tank. Almost significant.
 + Filter. Fish were more likely to build a nest without a filter in their tank.
 
@@ -661,6 +663,8 @@ plotResiduals(mNest_res, form = data$Filter)
 ```
 
 The model seems good.
+
+:::
 
 # Hovering
 
@@ -758,7 +762,7 @@ The model seems good besides the normality. But linear models are robust to the 
 
 ## Hovering place
 
-Just a plot with where the fish hovers at the different places depending on the tank.
+Just a plot with where the fish hovers depending on the tank.
 
 ```{r}
 #| column: page
@@ -787,7 +791,6 @@ Fish used different places for hovering in all tanks.
 
 :::
 
-:::
 
 # Up and down 
 

@@ -88,16 +88,3 @@ plot_var_binary_fish <- function(data, variable){
     ylab("Percentage of trials")+
     facet_wrap(~Fish)
 }
-
-# Plot order of tanks
-plot_order <- function(data, variable){
-  means_tank <- aggregate(data[,variable], list(data[,"Tank"],data[,"Order"]), mean) %>% 
-    setNames(.,c("Tank", "Order",variable))
-  
-  ggplot(data, aes_string(y = variable, x = "Order", group = "Tank", color = "Tank")) +
-    geom_jitter(alpha = .8, width = 0.05, height=0)+
-    geom_point(data = means_tank, size = 4, alpha = .5)+
-    geom_line(data = means_tank , alpha = .5)+
-    scale_color_manual(values = rev(c("#440154FF", "#3B528BFF", "#21908CFF", "#5DC863FF", "#FDE725FF")))+
-    ggtitle(variable)
-}

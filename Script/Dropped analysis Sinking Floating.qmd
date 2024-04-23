@@ -1,0 +1,77 @@
+---
+title: "Dropped analysis"
+date: "`r Sys.Date()`"
+format: 
+   html:
+    embed-resources: true
+    self-contained-math: true
+editor_options: 
+  chunk_output_type: console
+knitr:
+  opts_chunk:
+    fig-align: center
+    out-width: "100%"
+---
+
+```{r}
+#| include: false
+source("Script/Load-data2.R")
+source("Script/Functions/Plots.R")
+source("Script/Functions/Linear-model.R")
+data2$SF.bin <- factor(ifelse(data2$Sinking.Floating != 0, "Yes", "No")) # binary variable for sinking / floating
+```
+ 
+# Sinking/Floating
+
+Sinking/Floating contributed almost nothing to the first three PCA components (2%) + did not correlate strongly with any of the component. Sinking/Floating was not important to explain the variability between trials. After discussion with Naomi and Culum, we agree to not analyse this behavioural type.
+
+I still present the linear model on Sinking/Floating below.
+
+ 
+::: {.panel-tabset}
+
+ 
+## Distribution 
+
+```{r}
+hist1(data2$Sinking.Floating)
+table(data2$Sinking.Floating==0)
+```
+
+Many zeros, analysis with a binary generalised linear model. Only 34 trials where sinking/floating occured
+
+ 
+## Plot 
+
+```{r}
+#| warning: false
+plot_var_binary(data2, "SF.bin")
+plot_var_binary_fish (data2, "SF.bin")
+```
+
+## Generalised linear model 
+
+```{r}
+#| column: page
+mSF <- glmmTMB(SF.bin ~ Tank + Time + Filter + Order + (1|Fish), data = data2, family =binomial)
+glmmTMB:::Anova.glmmTMB(mSF)
+contr_tank.size_bin(mSF)
+contr_tank.enrich_bin(mSF)
+```
+
+Effect of Tank. 
+
+## Diagnosis 
+
+```{r}
+mSF_res <- simulateResiduals(mSF)
+plot(mSF_res)
+plotResiduals(mSF_res, form = data2$Tank)
+plotResiduals(mSF_res, form = data2$Time)
+plotResiduals(mSF_res, form = data2$Filter)
+```
+
+The model seems good.
+
+:::
+
