@@ -50,10 +50,16 @@ ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
     guides(fill=guide_legend(title="Behaviour"))+
     ggtitle("C. Filter"))
 
+(plot.order <- plot1("Order") + 
+   ylab("Time spent doing the behaviour (sec)")+
+   guides(fill=guide_legend(title="Behaviour"))+
+   ggtitle("D. Tank order"))
+
 (plot1 <- ggarrange(plot.tank,
                     ggarrange(plot.time, plot.filter, legend = "none"),
-                    common.legend = TRUE, legend = "top", nrow = 2))
-ggsave(plot1, filename = "Plots/Fig1.png",width = 8.11, height = 8.98)
+                    plot.order,
+                    common.legend = TRUE, legend = "top", nrow = 3))
+ggsave(plot1, filename = "Plots/Fig1.png",width = 8.11, height = 12.98)
 ```
 
 ## One plot = one behaviour

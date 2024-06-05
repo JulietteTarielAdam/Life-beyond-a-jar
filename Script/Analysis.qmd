@@ -193,10 +193,11 @@ Effect of Tank, Time, Filter and Order!
 
 ```{r}
 # Uncomment the 2 lines below if running the script for the first time
-## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## rpt.swimming <- rpt(Swimming ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 10000, npermut = 0)
 ## save(rpt.swimming, file = "Script/Repeatability rptR output/rpt.swimming")
 base::load("Script/Repeatability rptR output/rpt.swimming")
 summary(rpt.swimming)
+print(VarCorr(mSwimming),comp=c("Variance"), digits=2)
 ```
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. But the repeatability is quite low (0.2 [95% CI 0.06, 0.37]). 
@@ -255,10 +256,11 @@ Effect of Tank, Time and Order.
 
 ```{r}
 # Uncomment the 2 lines below if running the script for the first time
-## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 1000, npermut = 1000)
+## rpt.resting <- rpt(Resting ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Gaussian", nboot = 10000, npermut = 0)
 ## save(rpt.resting, file = "Script/Repeatability rptR output/rpt.resting")
 base::load("Script/Repeatability rptR output/rpt.resting")
 summary(rpt.resting)
+print(VarCorr(mResting),comp=c("Variance"), digits=2)
 ```
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of swimming. The repeatability is good 0.4 [95% CI 0.16, 0.58].
@@ -273,9 +275,12 @@ The model seems good.
 
 ## Resting place
 
-Just a plot with the amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials and fish. 
-
 Analysis only for Small, Medium and Large.
+
+
+### Plot 
+
+Amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials and fish. 
 
 ```{r}
 #| column: page
@@ -307,6 +312,21 @@ Interesting, fish avoided resting on filter. 48 trials with a filter in the tank
 table(data$Tank, data$Filter)
 # Trials with resting on filter
 filter(master[,c(1:5,7:8)], Resting.place == "Filter")  
+```
+
+
+### Analysis
+
+```{r}
+mRP <- lmer(Resting ~ Tank + Time + Filter + Order + Resting.place + (1|Fish), data = data_RP)
+anova(mRP, ddf = "Kenward-Roger", type = 2)
+emmeans(mRP, pairwise ~ Resting.place, adjust = "holm")$contrasts
+
+# With interaction
+table(data_RP$Resting.place, data_RP$Tank)
+mRP <- lmer(Resting ~ Tank*Resting.place + Time + Filter + Order + (1|Fish), data = data_RP)
+anova(mRP, ddf = "Kenward-Roger", type = 2)
+emmeans(mRP, pairwise ~ Resting.place) 
 ```
 
 
@@ -373,6 +393,7 @@ rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + Order + (1|Fish), grna
 # Likelihood ratio test of random effect
 mForaging0 <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
 anova(mForaging0, mForaging)
+print(VarCorr(mForaging),comp=c("Variance"), digits=2)
 ```
 
 Can calculate the repeatability but not its CI. Cannot calculate repeatability for Stereotypic swimming anyway. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable.
@@ -445,6 +466,7 @@ rpt.SS <- rpt(SS.bin ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish",
 # Likelihood ratio test of random effect
 mSS0 <- glmmTMB(SS.bin ~ Tank + Time + Filter, data = data, family =binomial)
 anova(mSS0, mSS)
+print(VarCorr(mSS),comp=c("Variance"), digits=2)
 ```
 
 Error when calculating the repeatability with rptR. 
@@ -559,6 +581,7 @@ Effect of Tank.
 ```{r}
 mInteracting0 <- glmmTMB(Interacting.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
 anova(mInteracting0, mInteracting)
+print(VarCorr(mInteracting),comp=c("Variance"), digits=2)
 ```
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of interaction with surface. 
@@ -648,6 +671,7 @@ Effect of Filter only.
 ```{r}
 mNest0 <- glmmTMB(Nest.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
 anova(mNest0, mNest)
+print(VarCorr(mNest),comp=c("Variance"), digits=2)
 ```
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of nest building. 
@@ -714,7 +738,12 @@ mHovering <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + Order + (1|Fish), dat
 glmmTMB:::Anova.glmmTMB(mHovering)
 
 emmeans(mHovering, ~ Time, type = "response")
-emmeans(mHovering, ~ Filter, type = "response")
+emmeans(mHovering, ~ Filter, type = "response") 
+
+## Random effect
+mHovering0 <- glmmTMB(Hovering.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
+anova(mHovering0, mHovering)
+print(VarCorr(mHovering),comp=c("Variance"), digits=2)
 ```
 
 No effect of Tank on the probability to hover during a trial, only an effect of Time and Filter
@@ -740,6 +769,8 @@ contr_tank.size(mHovering2)
 contr_tank.enrich(mHovering2)
 emmeans(mHovering2, ~ Time)
 emmeans(mHovering2, ~ Filter)
+
+# no random effect estimate possible with the weighted least squares
 ```
 
 Effect of Tank, Time and Filter.

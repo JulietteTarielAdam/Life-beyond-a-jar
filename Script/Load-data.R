@@ -115,8 +115,9 @@ data_RP <- tf(data_RP,
               function(x) colSums(x, na.rm = TRUE)) %>%
   filter(Resting.place!= "N/A") %>%
   mutate(Resting.place = factor(Resting.place,
-levels = c("Floor","Surface","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
-labels = c("Floor","Surface", "Plant",  "Plant", "Barrel", "Barrel", "Filter")))
+                                levels = c("Floor","Surface","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
+                                labels = c("Floor","Surface", "Plant",  "Plant", "Barrel", "Barrel", "Filter")),
+         Tank = fct_drop(Tank))
 
 # Interaction.with.surface types
 data_IT <- tf(master[master$Interation.with.surface !=0 & !is.na(master$Interation.with.surface),], 
