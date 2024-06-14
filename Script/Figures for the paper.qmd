@@ -23,10 +23,22 @@ plot_var <- function(data, variable){
 
 # PCA
 ```{r}
-(plotPCA1 <- plot(pca, choix = "var", col.var = palette.beh2) + labs(title = NULL))
-(plotPCA2 <- plot(pca, choix = "var", axes = c(3,4), col.var = palette.beh2) + labs(title = NULL))
+library(factoextra)
+(plotPCA1 <- fviz_pca_var(pca, arrowsize = 1.2, 
+                          labelsize = 5, 
+                          habillage = factor(1:8)) +
+  scale_colour_manual(values=palette.beh2, guide="none")+
+    theme(title = element_blank(),
+          axis.title = element_text(size = 12)))
 
-(plotPCA <- ggarrange(plotPCA1, plotPCA2, labels =LETTERS[1:2]))
+(plotPCA2 <- fviz_pca_var(pca, arrowsize = 1.2, axes = c(3,4),
+                          labelsize = 5, 
+                          habillage = factor(1:8)) +
+  scale_colour_manual(values=palette.beh2, guide="none")+
+    theme(title = element_blank(),
+          axis.title = element_text(size = 12)))
+
+(plotPCA <- ggarrange(plotPCA1, plotPCA2))
 ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
 ```
 
@@ -35,31 +47,49 @@ ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
 ## Plot summary
 
 ```{r}
+theme.new <- theme_classic()+ theme(axis.title.x = element_blank(),
+         axis.text.x = element_text(size = 12),
+         axis.text.y = element_text(size = 10),
+         axis.title.y = element_text(size = 12),
+         legend.text = element_text(size = 12))
+
 (plot.tank <- plot1("Tank") + 
    ylab("Time spent doing the behaviour (sec)")+
-   guides(fill=guide_legend(title="Behaviour"))+
-   ggtitle("A. Tank"))
+   scale_fill_manual(values = palette,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+                     name = "Behaviour")+
+   ggtitle("A. Tank")+
+    theme(theme.new))
 
 (plot.time <- plot1("Time") + 
     ylab("Time spent doing the behaviour (sec)")+
-    guides(fill=guide_legend(title="Behaviour"))+
-    ggtitle("B. Time of day"))
+   scale_fill_manual(values = palette,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+                     name = "Behaviour")+
+    ggtitle("B. Time of day")+
+    theme(theme.new))
 
 (plot.filter <- plot1("Filter") + 
     ylab("Time spent doing the behaviour (sec)")+
-    guides(fill=guide_legend(title="Behaviour"))+
-    ggtitle("C. Filter"))
+   scale_fill_manual(values = palette,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+                     name = "Behaviour")+
+    ggtitle("C. Filter")+
+    theme(theme.new))
 
 (plot.order <- plot1("Order") + 
    ylab("Time spent doing the behaviour (sec)")+
-   guides(fill=guide_legend(title="Behaviour"))+
-   ggtitle("D. Tank order"))
+   scale_fill_manual(values = palette,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+                     name = "Behaviour")+
+   ggtitle("D. Tank order")+
+    theme(theme.new))
 
-(plot1 <- ggarrange(plot.tank,
+(plot.fig1 <- ggarrange(plot.tank,
                     ggarrange(plot.time, plot.filter, legend = "none"),
                     plot.order,
                     common.legend = TRUE, legend = "top", nrow = 3))
-ggsave(plot1, filename = "Plots/Fig1.png",width = 8.11, height = 12.98)
+ggsave(plot.fig1 , filename = "Plots/Fig1.png",width = 8.11, height = 12.98)
 ```
 
 ## One plot = one behaviour
@@ -130,20 +160,28 @@ ggsave(plot.fish1, filename = "Plots/FigFish.png", width = 8.27, height = 6.27)
 ## One plot = one behaviour
 
 ```{r}
+theme.new2 <- theme_classic()+ theme(
+         axis.text.x = element_text(size = 12),
+         axis.text.y = element_text(size = 10),
+         axis.title.y = element_text(size = 12))
+
 (plot.lineA <- plot_var_fish(data, "Swimming") +
    ylab("Time spent swimming (sec)")+
-   ggtitle("A. Swimming"))
-ggsave(plot.lineA, filename = "Plots/FigFishSwimming.png", width = 5.67, height = 6.37)
+   ggtitle("A. Swimming")+
+    theme(theme.new2))
 
 (plot.lineB <- plot_var_fish(data, "Resting") +
    ylab("Time spent resting (sec)")+
-   ggtitle("B. Resting"))
-ggsave(plot.lineB, filename = "Plots/FigFishResting.png", width = 5.67, height = 6.37)
+   ggtitle("B. Resting")+
+    theme(theme.new2))
 
 (plot.lineC <- plot_var_fish(subset(data, Hovering >0), "Hovering") +
    ylab("Time spent hovering (sec)")+
-   ggtitle("C. Hovering"))
-ggsave(plot.lineC, filename = "Plots/FigFishHovering.png", width = 5.67, height = 6.37)
+   ggtitle("C. Hovering")+
+    theme(theme.new2))
+
+(plot.line<- ggarrange(plot.lineA,plot.lineB,plot.lineC, nrow = 2, ncol= 2))
+ggsave(plot.line , filename = "Plots/FigFish2.png",width = 12, height = 12)
 ```
 
 We tried the graph with rare behaviours such as Stereotypic swimming. But the results cannot be read as multiple individual lines were stacked at 0 (many fish never performed SS in any tank).
