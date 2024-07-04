@@ -301,6 +301,19 @@ data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting))
   guides(fill = guide_legend(reverse = TRUE))+
   ylab("% of time resting at the different places")+
   scale_y_continuous(labels=c(0,25,50,75,100))
+
+tableRP <- data_RP %>% group_by(Resting.place) %>% summarise(Mean.resting = mean(Resting))
+tableRP$percentage <- tableRP$Mean.resting *100/ sum(tableRP$Mean.resting)
+tableRP
+ggplot(data_RP, aes(y = Resting, x = Resting.place))+
+  geom_boxplot()
+  
+data_RP$Resting.place2 <- ifelse(data_RP$Resting.place %in% c("Plant", "Barrel", "Filter"), "Combined", as.character(data_RP$Resting.place))
+tableRP2 <- data_RP %>% group_by(Resting.place2) %>% summarise(Mean.resting = mean(Resting))
+tableRP2$percentage <- tableRP2$Mean.resting  *100/ sum(tableRP2$Mean.resting )
+tableRP2
+ggplot(data_RP, aes(y = Resting, x = Resting.place2))+
+  geom_boxplot()
 ```
 
 From the graphs, we can see that fish use different places to rest, not only one type. They use all the different places available. It does not seem that there is a preferred resting place. 

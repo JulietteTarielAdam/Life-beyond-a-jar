@@ -64,7 +64,7 @@ plot_var_fish <- function(data, variable){
     scale_color_manual(values=palette.fish)+
     geom_line(data = means_tank, aes(group=1), colour = "black", lwd = 2, linetype = "dashed")+
     geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(5,6), direction = "y", 
-                     size = 3, fontface = "bold")+
+                     size = 3.5, fontface = "bold")+
     scale_x_discrete(drop=FALSE) 
 }
 

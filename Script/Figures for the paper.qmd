@@ -9,6 +9,7 @@ editor_options:
 source("Script/Load-data.R")
 source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
+library(factoextra)
 
 # change size big red dot
 plot_var <- function(data, variable){
@@ -19,19 +20,27 @@ plot_var <- function(data, variable){
                  geom = "errorbar",colour = "red", width = 0.15, alpha =  .75)+
     stat_summary(fun.y = mean,geom = "point", colour = "red", size = 3)
 }
+
+# rename Barren
+data <- data %>% mutate(Tank = fct_recode(Tank, `Large-Barren` = "Barren"))
+levels(data$Tank)
 ```
 
 # PCA
 ```{r}
-library(factoextra)
-(plotPCA1 <- fviz_pca_var(pca, arrowsize = 1.2, 
+pca2 <- data2 %>% 
+  mutate(Interation.with.the.walls = Interation.with.surface) %>% 
+  dplyr::select(Swimming, Resting, Hovering, Stereotypic.swimming, Nest.building, Foraging,Interation.with.the.walls, Sinking.Floating) %>% 
+  PCA(., graph = FALSE, ncp=4, scale.unit = TRUE)
+
+(plotPCA1 <- fviz_pca_var(pca2, arrowsize = 1.2, 
                           labelsize = 5, 
                           habillage = factor(1:8)) +
   scale_colour_manual(values=palette.beh2, guide="none")+
     theme(title = element_blank(),
           axis.title = element_text(size = 12)))
 
-(plotPCA2 <- fviz_pca_var(pca, arrowsize = 1.2, axes = c(3,4),
+(plotPCA2 <- fviz_pca_var(pca2, arrowsize = 1.2, axes = c(3,4),
                           labelsize = 5, 
                           habillage = factor(1:8)) +
   scale_colour_manual(values=palette.beh2, guide="none")+
@@ -55,32 +64,32 @@ theme.new <- theme_classic()+ theme(axis.title.x = element_blank(),
 
 (plot.tank <- plot1("Tank") + 
    ylab("Time spent doing the behaviour (sec)")+
-   scale_fill_manual(values = palette,
-                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+   scale_fill_manual(values = palette.beh,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with the walls"),
                      name = "Behaviour")+
    ggtitle("A. Tank")+
     theme(theme.new))
 
 (plot.time <- plot1("Time") + 
     ylab("Time spent doing the behaviour (sec)")+
-   scale_fill_manual(values = palette,
-                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+   scale_fill_manual(values = palette.beh,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with the walls"),
                      name = "Behaviour")+
     ggtitle("B. Time of day")+
     theme(theme.new))
 
 (plot.filter <- plot1("Filter") + 
     ylab("Time spent doing the behaviour (sec)")+
-   scale_fill_manual(values = palette,
-                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+   scale_fill_manual(values = palette.beh,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with the walls"),
                      name = "Behaviour")+
     ggtitle("C. Filter")+
     theme(theme.new))
 
 (plot.order <- plot1("Order") + 
    ylab("Time spent doing the behaviour (sec)")+
-   scale_fill_manual(values = palette,
-                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with surface"),
+   scale_fill_manual(values = palette.beh,
+                     labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with the walls"),
                      name = "Behaviour")+
    ggtitle("D. Tank order")+
     theme(theme.new))
@@ -134,7 +143,6 @@ ggsave(plot.fig1 , filename = "Plots/Fig1.png",width = 8.11, height = 12.98)
 
 (plot2 <- ggarrange(plotA, plotB, plotC1, plotC2, plotD, plotE, plotF, plotG, ncol = 2, nrow = 4))
 ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
-
 ```
 
 # Individual fish
@@ -148,7 +156,8 @@ ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
          group = fct_collapse(Fish, "1" = levels(Fish)[1:7], "2" = levels(Fish)[8:13])) %>% 
   ggplot(., aes_string(fill = "Behaviour", y = "time", x = "Fish"))+
   geom_bar(position = position_dodge(), stat="identity", color=grey(0.4))+
-  scale_fill_manual(values = palette.beh)+
+  scale_fill_manual(values = palette.beh,
+                    labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with the walls"))+
   ylab("Time spent doing the behaviour (sec)")+
   facet_wrap(~group, scales = "free_x", ncol = 1)+
   theme(legend.position="top",
@@ -165,17 +174,38 @@ theme.new2 <- theme_classic()+ theme(
          axis.text.y = element_text(size = 10),
          axis.title.y = element_text(size = 12))
 
-(plot.lineA <- plot_var_fish(data, "Swimming") +
+# recoding plot_var_fish function because of the name change to Large-Barren instead of Barren
+plot_var_fish2 <- function(data, variable){
+  levels(data$Tank) <- c(levels(data$Tank),'')
+  means_tank <- aggregate(data[,variable], list(data[,"Tank"]), mean) %>% 
+    setNames(.,c("Tank", variable))
+  means_fish <- aggregate(data[,variable], list(data[,"Tank"],data[,"Fish"]), mean) %>% 
+    setNames(.,c("Tank", "Fish", variable)) %>% 
+    mutate(label = if_else(Tank == "Large-Barren", as.character(Fish), NA_character_))
+  # No Barren data for Merlion
+  means_fish <- within(means_fish, label[Tank == "Large" & Fish == "Merlion"] <- "Merlion") 
+
+  ggplot(means_fish ,aes_string(y = variable, x = "Tank", color="Fish")) +
+    geom_line(aes(group=Fish), lwd = 1.2) + 
+    guides(color="none")+
+    scale_color_manual(values=palette.fish)+
+    geom_line(data = means_tank, aes(group=1), colour = "black", lwd = 2, linetype = "dashed")+
+    geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(5,6), direction = "y", 
+                     size = 3.5, fontface = "bold")+
+    scale_x_discrete(drop=FALSE) 
+}
+
+(plot.lineA <- plot_var_fish2(data, "Swimming") +
    ylab("Time spent swimming (sec)")+
    ggtitle("A. Swimming")+
     theme(theme.new2))
 
-(plot.lineB <- plot_var_fish(data, "Resting") +
+(plot.lineB <- plot_var_fish2(data, "Resting") +
    ylab("Time spent resting (sec)")+
    ggtitle("B. Resting")+
     theme(theme.new2))
 
-(plot.lineC <- plot_var_fish(subset(data, Hovering >0), "Hovering") +
+(plot.lineC <- plot_var_fish2(subset(data, Hovering >0), "Hovering") +
    ylab("Time spent hovering (sec)")+
    ggtitle("C. Hovering")+
     theme(theme.new2))
