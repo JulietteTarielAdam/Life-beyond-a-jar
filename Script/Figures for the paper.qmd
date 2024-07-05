@@ -105,41 +105,63 @@ ggsave(plot.fig1 , filename = "Plots/Fig1.png",width = 8.11, height = 12.98)
 
 ```{r}
 (plotA <- plot_var(data, "Swimming") +
+   theme(axis.title.x = element_blank(),
+         title = element_text(size = 10)) +
    ylab("Time spent swimming (sec)")+
-   ggtitle("A. Swimming"))
+   ggtitle("A. Swimming")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plotB <- plot_var(data, "Resting") +
-   ylab("Time spent resting (sec)")+
-   ggtitle("B. Resting"))
+    theme(axis.title.x = element_blank(),
+          title = element_text(size = 10)) +
+    ylab("Time spent resting (sec)")+
+    ggtitle("B. Resting")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plotC1 <- plot_var(subset(data, Hovering >0), "Hovering") +
-   ylab("Time spent hovering (sec)")+
-   ggtitle("C1. Hovering"))
+    theme(axis.title.x = element_blank(),
+          title = element_text(size = 10)) +
+    ylab("Time spent hovering (sec)")+
+    ggtitle("C1. Hovering")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plotC2 <- plot_var_binary(data, "Hovering.bin") +
-   ylab("% of trials with hovering")+
+    theme(axis.title.x = element_blank(),
+          title = element_text(size = 10)) +
+    ylab("% of trials with hovering")+
     ylim(0,100)+
-   ggtitle("C2. Hovering"))
+    ggtitle("C2. Hovering")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plotD <- plot_var_binary(data, "SS.bin") +
-   ylab("% of trials with stereo. swim.")+
+    theme(axis.title.x = element_blank(),
+          title = element_text(size = 10)) +
+    ylab("% of trials with stereo. swim.")+
     ylim(0,100)+
-   ggtitle("D. Stereotypic swimming"))
+    ggtitle("D. Stereotypic swimming")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plotE <- plot_var_binary(data, "Nest.bin") +
-   ylab("% of trials with nest building")+
+    theme(axis.title.x = element_blank(),
+          title = element_text(size = 10)) +
+    ylab("% of trials with nest building")+
     ylim(0,100)+
-   ggtitle("E. Nest building"))
+    ggtitle("E. Nest building")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plotF <- plot_var_binary(data, "Foraging.bin") +
-   ylab("% of trials with foraging")+
+    theme(title = element_text(size = 10)) +
+    ylab("% of trials with foraging")+
     ylim(0,100)+
-   ggtitle("F. Foraging"))
+    ggtitle("F. Foraging")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plotG <- plot_var_binary(data, "Interacting.bin") +
-   ylab("% of trials with intera. with surf.")+
+    theme(title = element_text(size = 10)) +
+    ylab("% of trials with intera. with walls")+
     ylim(0,100)+
-   ggtitle("G. Interaction with surface"))
+    ggtitle("G. Interaction with the walls")+
+  scale_x_discrete(labels = c("Jar","Small", "Medium","Large", "Barren")))
 
 (plot2 <- ggarrange(plotA, plotB, plotC1, plotC2, plotD, plotE, plotF, plotG, ncol = 2, nrow = 4))
 ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)

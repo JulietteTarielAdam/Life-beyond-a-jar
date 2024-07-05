@@ -277,15 +277,53 @@ The model seems good.
 
 Analysis only for Small, Medium and Large.
 
+Problem is that the total resting time is different for each trial.We had to analyse the percentage of time resting at the different places rather than the raw time.
 
-### Plot 
-
-Amount of time resting at the different places depending on the tank. Each bar value is the mean of resting times over trials and fish. 
+### Description data
 
 ```{r}
 #| column: page
 #| echo: false
 #| message: false
+data_RP %>% group_by(Resting.place) %>%  
+  summarise(mean = mean(percentage)*100, 
+            N = n(), 
+            count_Zeros = sum(Resting == 0),
+            perc_zero = count_Zeros*100/N)
+
+# plot excluded Filter otherwise we don't see the distribution for the other resting places
+data_RP %>% filter(Resting.place != "Filter") %>% 
+ggplot(., aes(percentage, fill= Resting.place)) + geom_density(alpha = 0.5)
+
+```
+
+A lot of trials where the fish did not rest at all on Filter, Surface or Barrel. This is going to create a problem for the analysis (zero inflation).
+
+### Analysis 
+
+```{r}
+library(glmmTMB)
+library(car)
+library(DHARMa)
+modelRP1 <- glmmTMB(binary~  Resting.place + Tank + Time + Filter + Order + (1|Fish), data = data_RP, family = binomial)
+Anova(modelRP1)
+modelRP1_res <- simulateResiduals(modelRP1)
+plot(modelRP1_res)
+plotResiduals(modelRP1_res, form =  data_RP$Resting.place)
+
+emmeans(modelRP1, pairwise ~ Resting.place, type = "response")$contrasts
+```
+
+Barrel, Surface and Filter have a lower probability of being used as a resting place during a trial than Floor or Plant.
+No significant difference between Barrel, Surface or Filter. No significant difference between Floor or Plant. 
+
+## Analysis without zero
+
+
+```{r}
+data_RP %>% filter(Resting.place!="Filter") %>% 
+  ggplot(., aes(percentage, fill= Resting.place)) + geom_density(alpha = 0.5)
+
 data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
@@ -331,6 +369,10 @@ filter(master[,c(1:5,7:8)], Resting.place == "Filter")
 ### Analysis
 
 ```{r}
+
+zero_infl_model <- zeroinfl(percentage ~  Tank + Time + Filter + Order + Resting.place, data = data_RP, dist = "binomial")
+
+
 mRP <- lmer(Resting ~ Tank + Time + Filter + Order + Resting.place + (1|Fish), data = data_RP)
 anova(mRP, ddf = "Kenward-Roger", type = 2)
 emmeans(mRP, pairwise ~ Resting.place, adjust = "holm")$contrasts

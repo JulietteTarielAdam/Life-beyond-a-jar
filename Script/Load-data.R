@@ -107,17 +107,40 @@ data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
 ## Analysis only for Small, Medium and Large
 ## Concatenate "Plant leaves" and "Under or against plant" together
 ## Concatenate "Inside barrel" and "On or against barrel" together
-data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar") %>% 
-  filter(Resting !=0, !is.na(Resting))
-data_RP <- tf(data_RP,
-              c("Tank","Resting.place","Fish","Filter","Time","Order"),
-              c("Resting","Swimming"), # I have to specify two columns otherwise my function tf is not working
-              function(x) colSums(x, na.rm = TRUE)) %>%
-  filter(Resting.place!= "N/A") %>%
+## temp 1 is the data.frame with the resting time for each resting place for each trial
+## including 0 is not resting at this place for a trial
+temp1<- master %>% filter(Tank!= "Barren", Tank != "Jar") %>% 
+  filter(Resting !=0, !is.na(Resting)) %>% 
+  dplyr::select(Fish, Tank, Order, Time, Filter, Resting, Resting.place) %>% 
   mutate(Resting.place = factor(Resting.place,
                                 levels = c("Floor","Surface","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
                                 labels = c("Floor","Surface", "Plant",  "Plant", "Barrel", "Barrel", "Filter")),
-         Tank = fct_drop(Tank))
+         Tank = fct_drop(Tank)) %>% 
+  # some scoring with NA for the resting place
+  filter(!is.na(Resting.place)) %>% 
+  # add similar scores for up and down
+  group_by(Fish, Tank, Order, Time, Filter, Resting.place) %>%
+  summarize(Resting = sum(Resting), .groups = "drop") %>% 
+  # add zeros when the fish has not rested in a specific place for this trial
+  complete(nesting(Fish, Tank, Order, Time, Filter), Resting.place, fill = list(Resting = 0)) %>% 
+  # remove filter if it is a trial without filter
+  filter(!(Filter == "No-filter" & Resting.place== "Filter"))
+
+## temp2 is the total resting time for each trial
+temp2 <- data %>% dplyr::select(Fish, Tank, Order, Time, Filter, Resting) %>% 
+  filter(Tank!= "Barren", Tank != "Jar") %>% 
+  rename(total.resting = Resting) %>% 
+  mutate(Tank = fct_drop(Tank))
+
+## data_RP is the final concatenated data frame with the percentage of time resting at each place
+data_RP <- merge(temp1, temp2, by = c("Fish", "Tank", "Order", "Time", "Filter")) %>% 
+  mutate(percentage = Resting / total.resting)
+
+## new column as binary variable, 0 if the fish did not rest at all to this place during a trial, 1 otherwise
+data_RP$binary <- ifelse(data_RP$percentage >0, 1, 0)
+
+## data without zeros (and without Filter because it is only zeros besides one trial)
+data_RPwz <- data_RP %>% filter(Resting.place!="Filter", Resting > 0)
 
 # Interaction.with.surface types
 data_IT <- tf(master[master$Interation.with.surface !=0 & !is.na(master$Interation.with.surface),], 
