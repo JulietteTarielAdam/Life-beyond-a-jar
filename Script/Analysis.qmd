@@ -273,13 +273,17 @@ lm_diagnosis(mResting)
 
 The model seems good.
 
-## Resting place
+# Resting place
 
 Analysis only for Small, Medium and Large.
 
-Problem is that the total resting time is different for each trial.We had to analyse the percentage of time resting at the different places rather than the raw time.
+The total resting time is different for each trial -> we can't use directly the raw resting time at each place.
 
-### Description data
+Trying to use a multinomial regression model: extension of the binomial logit model to more than two categories. 
+
+Problem: Barrel and Filter as not possible categories for all fish. Solution is to concatenate Barrel, Filter and Plants as one category furnishings. 
+
+## Data description
 
 ```{r}
 #| column: page
@@ -291,13 +295,16 @@ data_RP %>% group_by(Resting.place) %>%
             count_Zeros = sum(Resting == 0),
             perc_zero = count_Zeros*100/N)
 
+data_RPwz %>% group_by(Resting.place) %>%  
+  summarise(mean_without_zeros = mean(percentage)*100, 
+            N_without_zeros = n())
+
 # plot excluded Filter otherwise we don't see the distribution for the other resting places
 data_RP %>% filter(Resting.place != "Filter") %>% 
 ggplot(., aes(percentage, fill= Resting.place)) + geom_density(alpha = 0.5)
-
 ```
 
-A lot of trials where the fish did not rest at all on Filter, Surface or Barrel. This is going to create a problem for the analysis (zero inflation).
+A lot of trials where the fish did not rest at all on Filter and Surface. This might create a problem for the analysis (zero inflation).
 
 ### Analysis 
 
@@ -311,7 +318,7 @@ modelRP1_res <- simulateResiduals(modelRP1)
 plot(modelRP1_res)
 plotResiduals(modelRP1_res, form =  data_RP$Resting.place)
 
-emmeans(modelRP1, pairwise ~ Resting.place, type = "response")$contrasts
+emmeans(modelRP1, pairwise ~ Resting.place, type = "response")
 ```
 
 Barrel, Surface and Filter have a lower probability of being used as a resting place during a trial than Floor or Plant.
@@ -319,11 +326,17 @@ No significant difference between Barrel, Surface or Filter. No significant diff
 
 ## Analysis without zero
 
+I also remove Filter as a whole as there is only one trial where a fish rested on the filter. 
 
 ```{r}
-data_RP %>% filter(Resting.place!="Filter") %>% 
-  ggplot(., aes(percentage, fill= Resting.place)) + geom_density(alpha = 0.5)
+ggplot(data_RPwz, aes(percentage, fill= Resting.place)) + geom_density(alpha = 0.5)
 
+modelRP2 <- glmmTMB(percentage~  Resting.place + Tank + Time + Filter + Order + (1|Fish), data = data_RPwz, family = binomial)
+
+
+```
+
+```{r}
 data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
@@ -355,34 +368,6 @@ ggplot(data_RP, aes(y = Resting, x = Resting.place2))+
 ```
 
 From the graphs, we can see that fish use different places to rest, not only one type. They use all the different places available. It does not seem that there is a preferred resting place. 
-
-Interesting, fish avoided resting on filter. 48 trials with a filter in the tank (24 in Medium + 24 in Large) but only one trial were the fish rested on the filter for Medium and Large. Fish only rested on filter in Barren. 
-
-```{r}
-# Number of trials with a filter
-table(data$Tank, data$Filter)
-# Trials with resting on filter
-filter(master[,c(1:5,7:8)], Resting.place == "Filter")  
-```
-
-
-### Analysis
-
-```{r}
-
-zero_infl_model <- zeroinfl(percentage ~  Tank + Time + Filter + Order + Resting.place, data = data_RP, dist = "binomial")
-
-
-mRP <- lmer(Resting ~ Tank + Time + Filter + Order + Resting.place + (1|Fish), data = data_RP)
-anova(mRP, ddf = "Kenward-Roger", type = 2)
-emmeans(mRP, pairwise ~ Resting.place, adjust = "holm")$contrasts
-
-# With interaction
-table(data_RP$Resting.place, data_RP$Tank)
-mRP <- lmer(Resting ~ Tank*Resting.place + Time + Filter + Order + (1|Fish), data = data_RP)
-anova(mRP, ddf = "Kenward-Roger", type = 2)
-emmeans(mRP, pairwise ~ Resting.place) 
-```
 
 
 :::

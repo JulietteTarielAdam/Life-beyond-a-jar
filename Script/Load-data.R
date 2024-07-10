@@ -124,7 +124,10 @@ temp1<- master %>% filter(Tank!= "Barren", Tank != "Jar") %>%
   # add zeros when the fish has not rested in a specific place for this trial
   complete(nesting(Fish, Tank, Order, Time, Filter), Resting.place, fill = list(Resting = 0)) %>% 
   # remove filter if it is a trial without filter
-  filter(!(Filter == "No-filter" & Resting.place== "Filter"))
+  filter(!(Filter == "No-filter" & Resting.place== "Filter")) %>% 
+  # remove Barrel for Small and Medium
+  filter(!(Tank == "Small" & Resting.place == "Barrel"),
+         !(Tank == "Medium" & Resting.place == "Barrel"))
 
 ## temp2 is the total resting time for each trial
 temp2 <- data %>% dplyr::select(Fish, Tank, Order, Time, Filter, Resting) %>% 

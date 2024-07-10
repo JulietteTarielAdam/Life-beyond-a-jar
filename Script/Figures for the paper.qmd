@@ -241,7 +241,7 @@ We tried the graph with rare behaviours such as Stereotypic swimming. But the re
 # Resting place
 
 ```{r}
-(plotRPtank <- data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
+(plotRPtank <- data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(percentage)) %>% 
    ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
    scale_fill_manual(values=palette_RP)+
@@ -250,7 +250,7 @@ We tried the graph with rare behaviours such as Stereotypic swimming. But the re
    scale_y_continuous(labels=c(0,25,50,75,100))+
    ggtitle("A"))
 
-(plotRPfish <- data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
+(plotRPfish <- data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(percentage)) %>% 
     ggplot(., aes(y = Resting, x = Fish,fill = Resting.place, width=.75))+
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
     scale_fill_manual(values=palette_RP)+
