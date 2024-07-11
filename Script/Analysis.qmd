@@ -279,62 +279,34 @@ Analysis only for Small, Medium and Large.
 
 The total resting time is different for each trial -> we can't use directly the raw resting time at each place.
 
-Trying to use a multinomial regression model: extension of the binomial logit model to more than two categories. 
-
-Problem: Barrel and Filter as not possible categories for all fish. Solution is to concatenate Barrel, Filter and Plants as one category furnishings. 
+Trying to use a multinomial regression model: extension of the binomial logit model to more than two categories. We have then three categories:
++ Floor
++ Water surface
++ Furnishings (Plants, Barrel, Filter)
 
 ## Data description
 
 ```{r}
-#| column: page
-#| echo: false
-#| message: false
-data_RP %>% group_by(Resting.place) %>%  
-  summarise(mean = mean(percentage)*100, 
-            N = n(), 
-            count_Zeros = sum(Resting == 0),
-            perc_zero = count_Zeros*100/N)
+summary(data_RP2 %>% dplyr::select(Floor, Furnishings, Water.surface))
+# number of zeros (no resting at this place during the trial)
+data_RP2 %>% dplyr::select(Floor, Furnishings, `Water surface`) %>% 
+  apply(.,2, function(x) sum(x==0))
 
-data_RPwz %>% group_by(Resting.place) %>%  
-  summarise(mean_without_zeros = mean(percentage)*100, 
-            N_without_zeros = n())
-
-# plot excluded Filter otherwise we don't see the distribution for the other resting places
-data_RP %>% filter(Resting.place != "Filter") %>% 
-ggplot(., aes(percentage, fill= Resting.place)) + geom_density(alpha = 0.5)
+data_RP2 %>% 
+  pivot_longer(cols = c(Floor, `Water surface`, Furnishings), names_to = "place") %>% 
+ggplot(., aes(value, fill = place)) +
+  geom_density(alpha = 0.5)
 ```
 
-A lot of trials where the fish did not rest at all on Filter and Surface. This might create a problem for the analysis (zero inflation).
-
-### Analysis 
+## Analysis 
 
 ```{r}
-library(glmmTMB)
-library(car)
-library(DHARMa)
-modelRP1 <- glmmTMB(binary~  Resting.place + Tank + Time + Filter + Order + (1|Fish), data = data_RP, family = binomial)
-Anova(modelRP1)
-modelRP1_res <- simulateResiduals(modelRP1)
-plot(modelRP1_res)
-plotResiduals(modelRP1_res, form =  data_RP$Resting.place)
-
-emmeans(modelRP1, pairwise ~ Resting.place, type = "response")
-```
-
-Barrel, Surface and Filter have a lower probability of being used as a resting place during a trial than Floor or Plant.
-No significant difference between Barrel, Surface or Filter. No significant difference between Floor or Plant. 
-
-## Analysis without zero
-
-I also remove Filter as a whole as there is only one trial where a fish rested on the filter. 
-
-```{r}
-ggplot(data_RPwz, aes(percentage, fill= Resting.place)) + geom_density(alpha = 0.5)
-
-modelRP2 <- glmmTMB(percentage~  Resting.place + Tank + Time + Filter + Order + (1|Fish), data = data_RPwz, family = binomial)
-
+library(brms)
+m1 <- brm(cbind(Floor, Water.surface, Furnishings) ~ Tank + Order + Time + Filter + (1|Fish), data = data_RP2, family = categorical(link = "logit"))
 
 ```
+
+
 
 ```{r}
 data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
