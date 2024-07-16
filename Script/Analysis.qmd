@@ -290,11 +290,12 @@ Our response variables are the numbers of seconds resting at these 3 categories 
 ## Data description
 
 ```{r}
-summary(data_RP %>% dplyr::select(Floor, Furnishings, Water.surface))
+summary(data_RP %>% dplyr::select(Floor:Furn.perc, - Total.trial))
 
 # number of zeros (no resting at this place during the trial)
 data_RP %>% dplyr::select(Floor, Furnishings, Water.surface) %>% 
   apply(.,2, function(x) sum(x==0))
+nrow(data_RP)
 
 # data distribution
 data_RP %>% 
@@ -303,14 +304,45 @@ ggplot(., aes(value, fill = place)) +
   geom_density(alpha = 0.5)
 ```
 
-A lot of zeros for Water.surface (= no resting at this place during the trial). 
+On average, fish spent 49% of their resting time on the floor, 47% on furnishings and 4% on the water surface. Out of 152 trials during which fish rested, they avoided resting on the floor in 17 trials, on furnishings in 22 trials, and on the water surface in 116 trials. 
 
 ## Analysis 
 
-For the multinomial regression model
 
 ```{r}
-require(nnet)
+library(nnet)
+library(mclogit)
+m1 <- mclogit(cbind(Floor, Water.surface, Furnishings) ~ Tank  + Time + Order + Filter, random = ~1|Fish, data = data_RP)
+summary(m1)
+
+library(multcomp)
+pairwise_comparisons <- glht(m1, linfct = mcp(Floor = "Tukey"))
+summary(pairwise_comparisons)
+
+# Extract the model matrix and coefficients
+model_matrix <- model.matrix(m1)
+coef_estimates <- coef(m1)
+
+# Specify the pairwise comparisons you are interested in
+contrast_matrix <- rbind(
+  "Floor vs Water.surface" = c(1, -1, 0),
+  "Floor vs Furnishings" = c(1, 0, -1),
+  "Water.surface vs Furnishings" = c(1, -1, 0),
+)
+
+# Perform the pairwise comparisons using glht function from multcomp package
+pairwise_comparisons <- glht(m1, linfct = mcp(contrast_matrix))
+
+# Summarize the results
+summary(pairwise_comparisons)
+
+
+mtable(m1)
+dispersion(m1,method="Afroz")
+dispersion(m1,method="Deviance")
+Freq|time.class~econ.left/class+welfare/class+auth/class,
+random=~1|party/time,
+data=electors
 m1 <- brm(cbind(Floor, Water.surface, Furnishings) ~ Tank  + Time + (1|Fish), data = data_RP, family = categorical(link = "logit"))
 
 ```

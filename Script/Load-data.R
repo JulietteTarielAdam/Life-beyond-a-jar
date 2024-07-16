@@ -122,7 +122,11 @@ data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar") %>%
   summarize(Resting = sum(Resting), .groups = "drop") %>% 
   # add zeros when the fish has not rested in a specific place for this trial
   complete(nesting(Fish, Tank, Order, Time, Filter), Resting.place, fill = list(Resting = 0)) %>% 
-  pivot_wider(names_from = Resting.place, values_from = Resting)
+  pivot_wider(names_from = Resting.place, values_from = Resting) %>% 
+  mutate(Total.trial = Floor + Water.surface + Furnishings,
+         Floor.perc = Floor / Total.trial,
+         Surface.perc = Water.surface / Total.trial,
+         Furn.perc = Furnishings / Total.trial)
 
 ## verification
 table(paste(data_RP$Fish, data_RP$Tank) , data_RP$Time)
