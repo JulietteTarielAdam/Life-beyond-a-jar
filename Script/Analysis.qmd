@@ -280,29 +280,38 @@ Analysis only for Small, Medium and Large.
 The total resting time is different for each trial -> we can't use directly the raw resting time at each place.
 
 Trying to use a multinomial regression model: extension of the binomial logit model to more than two categories. We have then three categories:
+
 + Floor
 + Water surface
 + Furnishings (Plants, Barrel, Filter)
 
+Our response variables are the numbers of seconds resting at these 3 categories for each trial. # sec resting of the floor + # sec resting at the water surface + # sec resting of furnishings = total # sec resting during the trial.
+
 ## Data description
 
 ```{r}
-summary(data_RP2 %>% dplyr::select(Floor, Furnishings, Water.surface))
+summary(data_RP %>% dplyr::select(Floor, Furnishings, Water.surface))
+
 # number of zeros (no resting at this place during the trial)
-data_RP2 %>% dplyr::select(Floor, Furnishings, `Water surface`) %>% 
+data_RP %>% dplyr::select(Floor, Furnishings, Water.surface) %>% 
   apply(.,2, function(x) sum(x==0))
 
-data_RP2 %>% 
-  pivot_longer(cols = c(Floor, `Water surface`, Furnishings), names_to = "place") %>% 
+# data distribution
+data_RP %>% 
+  pivot_longer(cols = c(Floor, Water.surface, Furnishings), names_to = "place") %>% 
 ggplot(., aes(value, fill = place)) +
   geom_density(alpha = 0.5)
 ```
 
+A lot of zeros for Water.surface (= no resting at this place during the trial). 
+
 ## Analysis 
 
+For the multinomial regression model
+
 ```{r}
-library(brms)
-m1 <- brm(cbind(Floor, Water.surface, Furnishings) ~ Tank + Order + Time + Filter + (1|Fish), data = data_RP2, family = categorical(link = "logit"))
+require(nnet)
+m1 <- brm(cbind(Floor, Water.surface, Furnishings) ~ Tank  + Time + (1|Fish), data = data_RP, family = categorical(link = "logit"))
 
 ```
 
