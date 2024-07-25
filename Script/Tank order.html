@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Juliette Tariel-Adam">
-<meta name="dcterms.date" content="2024-04-23">
+<meta name="dcterms.date" content="2024-07-25">
 
 <title>Order of tanks</title>
 <style>
@@ -3042,7 +3042,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 23, 2024</p>
+      <p class="date">July 25, 2024</p>
     </div>
   </div>
   
@@ -3053,7 +3053,7 @@ vertical-align: -.125em;
 </header>
 
 <p>Order in which the fish experienced the tanks. Fish underwent different order of treatments: Some fish started with Large, then Small, etc; Other fish with Medium, then Jar, etc. Barren was the last tank = 5th tank for all fish. Is there an effect of the order of treatments? For instance, were fish more swimming on average during the 1st or 2nd tank they went in?</p>
-<p>A problem because all fish last experienced Barren, we cannot disentangle the effect of Barren from the effect of order. Maybe all the changes in behaviour in Barren were only because it was the last tank the fish went into. At least, we are comparing Large and Barren -Large is not always the 4th tank- so we are not always comparing the same tank orders when comparing Large and Barren.</p>
+<p>A problem because all fish last experienced Barren, we cannot disentangle the effect of Barren from the effect of order. Maybe all the changes in behaviour in Barren were only because it was the last tank the fish went into. At least, we are comparing Large and Barren, as Large is not always the 4th tank, we are not always comparing the same tank orders when comparing Large and Barren.</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Tank <span class="sc">!=</span> <span class="st">&quot;Barren&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot1</span>(<span class="st">&quot;Order&quot;</span>, <span class="at">main =</span> .) <span class="sc">+</span></span>
@@ -3091,7 +3091,7 @@ vertical-align: -.125em;
 </div>
 </div>
 <p>Considering the plot of the relationship between Swimming and Tank order (no linear relationship), tank order is better as a categorical variable.</p>
-<p>After, comparison of models with or without tank order, on the full or subset dataset without Barren</p>
+<p>After, comparison of models with or without tank order, on the full or subset dataset without Barren.</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># With tank order on data without Barren</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mOrder.Swimming.subset <span class="ot">&lt;-</span> <span class="fu">lmer</span>(Swimming <span class="sc">~</span> Tank <span class="sc">+</span> Time <span class="sc">+</span> Filter <span class="sc">+</span> Order.fac <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Fish), <span class="at">data =</span> <span class="fu">filter</span>(data, Tank <span class="sc">!=</span><span class="st">&quot;Barren&quot;</span>))</span>
