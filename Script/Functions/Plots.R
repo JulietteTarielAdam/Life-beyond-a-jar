@@ -10,7 +10,7 @@ palette.beh3 = c(palette.beh2,"grey")
 palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 
 ## Resting place
-palette_RP <- c("#F3C8AC", "#A0F1FF", "#90D0AA", "#A2794B", "#B8B8B8")
+palette_RP <- c("#F3C8AC","#76ad5e","#96824a","#a7aba6", "#A0F1FF")
 
 ## Hovering place
 palette_HP <- c("#E3C9B8", "#6eacc4", "#89D7F5", "#d0effb","#6B4921")
@@ -68,7 +68,7 @@ plot_var_fish <- function(data, variable){
     scale_x_discrete(drop=FALSE) 
 }
 
-# Plot binary
+# Plot for binary variables
 plot_var_binary <- function(data, variable){
   data2 <- aggregate(data[,variable], 
                      list(data[,"Tank"]), 

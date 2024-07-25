@@ -22,7 +22,7 @@ source("Script/Functions/Plots.R")
 source("Script/Functions/Linear-model.R")
 ```
 
-The script contains the code of data transformation, analysis and graphs for the article "Life Beyond A Jar: Effects of Tank Size and Enrichment on the Behaviour and Welfare of Siamese Fighting Fishes" by XXauthorsXXX. It is in two versions: the raw R script in qmd format and the code output in html format. 
+The script contains the code of data transformation, analysis and graphs for the article "Life Beyond A Jar: Effects of Tank Size and Enrichment on the Behaviour and Welfare of Siamese Fighting Fishes" by Naomi Clark-Shen et al. It is in two versions: the raw R script in qmd format and the code output in html format. 
 
 The goal was to test the effect of tank enrichment and size on Siamese fish behaviour. The tanks Jar, Small, Medium and Large are compared among each other, and the tank Large and Barren between each other. Barren is not compared to Jar, Small or Medium because they differ by two factors: enrichment and size. 
 
@@ -43,12 +43,13 @@ Sinking/Floating was not analysed (see explanation in the PCA section).
 The data has been inspected and corrected for data entry errors (sum of scored behaviours too low/high, column shifted, typos, inconsistent nb of observations per fish/time/tank...).
 
 Each row represents a trial. For each trial, there is:
+
 + Fish: the fish tested
 + Tank: in which tank the fish was
 + Order: the tank order, i.e. whether it was the first, second, ..., fifth tank that the fish experienced.
 + Time: time of the day at which the trial happened
 + Filter: where there a filter in the tank
-+ Behavioural columns. The columns for the behaviours are the time spent doing the specific behaviour in seconds during the trial. Some behaviours (Forgaging, Hovering, Interaction.with.Surface, Stereotypic.swimming) have been trasnformed in binary variable (.bin). The columns .bins represents if the fish performed the specific behaviour at all during the trial or not. 
++ Behavioural columns. The columns for the behaviours are the time spent doing the specific behaviour in seconds during the trial. Some behaviours (Forgaging, Hovering, Interaction.with.Surface, Stereotypic.swimming) have been trasnformed in binary variable (.bin). The columns .bins represents if the fish performed the specific behaviour at lest during one second during the trial or not. 
 
 ```{r}
 #| warning: false
@@ -174,20 +175,23 @@ anova(mSwimming, ddf = "Kenward-Roger", type = 2)
 contr_tank.size(mSwimming)
 contr_tank.enrich(mSwimming)
 # estimated means of time spent swimming depending on:
-emmeans(mSwimming, ~ Time) # time of day
-emmeans(mSwimming, ~ Filter) # filter
+## time of day
+emmeans(mSwimming, ~ Time)
+## filter
+emmeans(mSwimming, ~ Filter)
+## order
 rbind(emmeans(mSwimming, ~ Order, at = list(Tank = c("Jar", "Small", "Medium", "Large"),Order = c("1", "2", "3", "4"))),
       emmeans(mSwimming, ~ Order, at = list(Tank = c("Barren"),Order = "5"))) # tank order
 ```
 
 Effect of Tank, Time, Filter and Order! 
 
-+ Tank. Large swam significantly more time than Jar, Small and Medium. Fish in Large swan 92 sec [CI 46, 138] more than Jar (over a 600 sec trial), xx sec [CI xx, xx] more than Small, and xx sec [CI xx, xx] more than Medium. In addition,  fish in Large swam significantly more time (xx sec [CI xx, xx]) than fish in Barren. 
-+ Time. Fish swim more in the morning than in the afternoon, especially at 7 am.
-+ Filter. Fish swim more with a filter in their tank.
-+ Order. All confidence intervals are overlapping so probably no significant difference between orders. It seems that fish swim more in their 2nd and 3rd tank.
++ Tank. Large swam significantly more time than Jar, Small and Medium. Fish in Large swan 92 sec [CI 46, 138] more than Jar (over a 600 sec trial) for example. In addition,  fish in Large swam significantly more time than fish in Barren. 
++ Time. It seems that fish swam more in the morning than in the afternoon, especially at 7 am.
++ Filter. Fish swam more with a filter in their tank.
++ Order. It seems that fish swam more in their 2nd and 3rd tank.
 
-+ Effect of Barren or tank order 5? The effect size of Tank (shown by the Sum Sq) is three times more than the effect size of Order. Max difference between orders 1-4 is 43 sec. Difference between Large and Barren/5 is 53. Effect of tank is stronger on time spent swimming, so it is likely the diff between Large and Barren/5 is due (at least party) to Tank.
+Effect of Barren or tank order 5? The effect size of Tank (shown by the Sum Sq) is three times more than the effect size of Order. Max difference between orders 1-4 is 43 sec. Difference between Large and Barren/5 is 53. Effect of tank is stronger on time spent swimming, so it is likely the diff between Large and Barren/5 is due (at least party) to Tank.
 
 ## Between-fish diff
 
@@ -241,16 +245,19 @@ mResting <- lmer(Resting ~ Tank + Time + Filter + Order + (1|Fish), data = data)
 anova(mResting, ddf = "Kenward-Roger", type = 2)
 contr_tank.size(mResting)
 contr_tank.enrich(mResting)
+# estimated means of time spent resting depending on:
+## time of day
 emmeans(mResting, ~ Time)
+## order
 rbind(emmeans(mResting, ~ Order, at = list(Tank = c("Jar", "Small", "Medium", "Large"),Order = c("1", "2", "3", "4"))),
       emmeans(mResting, ~ Order, at = list(Tank = c("Barren"),Order = "5")))
 ```
 
 Effect of Tank, Time and Order.
 
-+ Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). Fish in Large rested 109 sec [CI 40, 178] **less** time than fish in Jar (over a 600 sec trial), and xx sec [CI xx, xx] more  fish in Medium. This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
-+ Time. Fish rest less time in the morning, especially at 7 am. In line with the PCA and the results of Swimming.
-+ Order. All confidence intervals are overlapping so probably no significant difference between orders. It seems that fish rest more in their 1st and 4th tank.
++ Tank. Large rested significantly less time than Jar and Medium (almost significant for Small). This is in line with the PCA and the results of Swimming: Fish that spent time swimming spent less time resting. Fish in Large were overall more active. No significant difference between Large and Barren. 
++ Time. Fish rested less time in the morning, especially at 7 am. In line with the PCA and the results of Swimming.
++ Order. It seems that fish rested more in their 1st and 4th tank.
 
 ## Between-fish diff
 
@@ -273,115 +280,101 @@ lm_diagnosis(mResting)
 
 The model seems good.
 
+:::
+
 # Resting place
 
-Analysis only for Small, Medium and Large.
+::: {.panel-tabset}
 
-The total resting time is different for each trial -> we can't use directly the raw resting time at each place.
+Analysis only for Small, Medium and Large which have furnishings. We concatenate the resting places Filter, Plants and Hideout barrel into one category Furnishings to be able to compare resting places for all trials (not all trials occurred with a filter or a hideout barrel inside the tanl). 
 
-Trying to use a multinomial regression model: extension of the binomial logit model to more than two categories. We have then three categories:
+The total resting time was different for each trial -> we can't use directly the raw resting time at each place.
+
+We are using a multinomial regression model: extension of the binomial logit model to more than two categories. We have then three categories:
 
 + Floor
 + Water surface
 + Furnishings (Plants, Barrel, Filter)
 
-Our response variables are the numbers of seconds resting at these 3 categories for each trial. # sec resting of the floor + # sec resting at the water surface + # sec resting of furnishings = total # sec resting during the trial.
+Our three response variables are the numbers of seconds resting at these 3 categories for each trial. 
+
+1. \# sec resting of the floor during the trial
+2. \# sec resting at the water surface of the floor during the trial
+3. \# sec resting of furnishings of the floor during the trial.
+
+They sum up to the total # sec resting during the trial. 
 
 ## Data description
 
 ```{r}
-summary(data_RP %>% dplyr::select(Floor:Furn.perc, - Total.trial))
+summary(data_RP %>% dplyr::select(Floor:Furn.perc))
+# number of zeros (no resting at this place during the trial), N (total nb of trials) and NAs (NAs for filter and barrel when no filter or barrel in the tank)
+count_zeros_and_nas <- function(df) {
+  result <- data.frame(
+    Zeros = sapply(df, function(x) sum(x == 0, na.rm = TRUE)),
+    N = sapply(df, function(x) sum(!is.na(x))),
+    NAs = sapply(df, function(x) sum(is.na(x)))
+  )
+  return(result)}
+data_RP %>% dplyr::select(Floor, Water.surface, Furnishings) %>% 
+  count_zeros_and_nas(.)
+```
 
-# number of zeros (no resting at this place during the trial)
-data_RP %>% dplyr::select(Floor, Furnishings, Water.surface) %>% 
-  apply(.,2, function(x) sum(x==0))
-nrow(data_RP)
+On average, fish spent 49% of their resting time on the floor, 47% on furnishings and 4% on the water surface. Out of 152 trials during which fish rested, they avoided resting on the floor in 17 trials, on furnishings in 22 trials, and on the water surface in 116 trials.
 
-# data distribution
-data_RP %>% 
-  pivot_longer(cols = c(Floor, Water.surface, Furnishings), names_to = "place") %>% 
+### In Large tank with all resting places
+```{r}
+data_RP2 %>% filter(Tank == "Large") %>%  dplyr::select(Floor:Barrel.perc, -filter) %>% 
+  summary() 
+data_RP2 %>%  filter(Tank == "Large") %>% 
+  pivot_longer(cols = Floor:Barrel, 
+                        names_to = "place") %>% # remove filter because only zeros besides one trial
 ggplot(., aes(value, fill = place)) +
   geom_density(alpha = 0.5)
 ```
 
-On average, fish spent 49% of their resting time on the floor, 47% on furnishings and 4% on the water surface. Out of 152 trials during which fish rested, they avoided resting on the floor in 17 trials, on furnishings in 22 trials, and on the water surface in 116 trials. 
+In Large, they rested 46% on the floor, 29% in or on the hideout barrel, 21% on plants and 4% on the water. 
+
+### Filter
+
+```{r}
+data_RP2 %>% dplyr::select(filter, filter.perc) %>% summary()
+data_RP2 %>% dplyr::select(filter) %>% 
+  count_zeros_and_nas(.)
+```
+
+Out of 45 trials with a filter inside the tank, the fish avoided resting on the filter during 44 trials so almost of all them.
 
 ## Analysis 
 
+To run the multinomial regression model, we have to account for the fact that each second is not independant from each other. Normally each second should be an independent experimental unit leading to a success or a failure (like in a classic binomial distribution). We included a "trial" random intercept to account for this non-independence between seconds of the same trial.
+
+We included an "ExpSetting" random intercept including Tank, Order, Time and Filter. Reason for this is that otherwise the difference between water.surface vs floor or furnishings vs floor is done for every level of Tank, Order, Time and Filter. It is like asking the questions "does the difference between water.surface and floor is significant in the large tank, in the medium, in the small tank, in a tank with no filter, etc. This was way too many tests and not tailor to our question: what resting place do fish prefer?
+
+In the summary, the Estimate of the (Intercept) for Water.surface vs Floor is equal to $log(\frac{P_{\text{resting on the water surface}}}{P_{\text{resting on the floor}}})$
+
+Same for the contrasts between estimated means.
 
 ```{r}
-library(nnet)
-library(mclogit)
-m1 <- mclogit(cbind(Floor, Water.surface, Furnishings) ~ Tank  + Time + Order + Filter, random = ~1|Fish, data = data_RP)
-summary(m1)
-
-library(multcomp)
-pairwise_comparisons <- glht(m1, linfct = mcp(Floor = "Tukey"))
-summary(pairwise_comparisons)
-
-# Extract the model matrix and coefficients
-model_matrix <- model.matrix(m1)
-coef_estimates <- coef(m1)
-
-# Specify the pairwise comparisons you are interested in
-contrast_matrix <- rbind(
-  "Floor vs Water.surface" = c(1, -1, 0),
-  "Floor vs Furnishings" = c(1, 0, -1),
-  "Water.surface vs Furnishings" = c(1, -1, 0),
-)
-
-# Perform the pairwise comparisons using glht function from multcomp package
-pairwise_comparisons <- glht(m1, linfct = mcp(contrast_matrix))
-
-# Summarize the results
-summary(pairwise_comparisons)
-
-
-mtable(m1)
-dispersion(m1,method="Afroz")
-dispersion(m1,method="Deviance")
-Freq|time.class~econ.left/class+welfare/class+auth/class,
-random=~1|party/time,
-data=electors
-m1 <- brm(cbind(Floor, Water.surface, Furnishings) ~ Tank  + Time + (1|Fish), data = data_RP, family = categorical(link = "logit"))
-
+# understanding ExpSetting (Tank:Order:Filter:Time) by showing all levels of ExpSetting
+unique(data_RP$ExpSetting)
+# running the model
+mRP <- mblogit(cbind(Floor, Furnishings, Water.surface) ~ 1, random = list(~1|Fish,~1|trial, ~1|ExpSetting), data = data_RP)
+summary(mRP)
+# Contrasts
+## cbind1 = Floor, cbind2 = Furnishings, cbind3 = Water.surface
+emmeans(mRP, pairwise~cbind, mode = "latent")
+# Diagnostic normality of random residuals
+## Fish
+qqnorm(mRP$random.effects[[1]])
+qqline(mRP$random.effects[[1]])
+## trial
+qqnorm(mRP$random.effects[[2]])
+qqline(mRP$random.effects[[2]])
+## ExpSetting
+qqnorm(mRP$random.effects[[3]])
+qqline(mRP$random.effects[[3]])
 ```
-
-
-
-```{r}
-data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
-  ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
-    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-  scale_fill_manual(values=palette_RP)+
-  guides(fill = guide_legend(reverse = TRUE))+
-  ylab("% of time resting at the different places")+
-  scale_y_continuous(labels=c(0,25,50,75,100))
-
-data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(Resting)) %>% 
-  ggplot(., aes(y = Resting, x = Fish,fill = Resting.place))+
-    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-  scale_fill_manual(values=palette_RP)+
-  guides(fill = guide_legend(reverse = TRUE))+
-  ylab("% of time resting at the different places")+
-  scale_y_continuous(labels=c(0,25,50,75,100))
-
-tableRP <- data_RP %>% group_by(Resting.place) %>% summarise(Mean.resting = mean(Resting))
-tableRP$percentage <- tableRP$Mean.resting *100/ sum(tableRP$Mean.resting)
-tableRP
-ggplot(data_RP, aes(y = Resting, x = Resting.place))+
-  geom_boxplot()
-  
-data_RP$Resting.place2 <- ifelse(data_RP$Resting.place %in% c("Plant", "Barrel", "Filter"), "Combined", as.character(data_RP$Resting.place))
-tableRP2 <- data_RP %>% group_by(Resting.place2) %>% summarise(Mean.resting = mean(Resting))
-tableRP2$percentage <- tableRP2$Mean.resting  *100/ sum(tableRP2$Mean.resting )
-tableRP2
-ggplot(data_RP, aes(y = Resting, x = Resting.place2))+
-  geom_boxplot()
-```
-
-From the graphs, we can see that fish use different places to rest, not only one type. They use all the different places available. It does not seem that there is a preferred resting place. 
-
 
 :::
 
@@ -435,13 +428,12 @@ Effect of Tank.
 
 As a reminder, an odds.ratio < 1 between tank X vs tank Y means the probability of foraging during a trial in tank X is smaller that the probability of foraging during a trial in tank Y. An odd ratio for instance of 0.2 means that a fish is (1 / 0.2) = five times more likely to forage during a trial in tank Y than in Tank X. If we imagine 5 trials, fish will forage on average during 1 trial out of 5 in Tank X whereas fish will forage on average during 5 trials out of 5 in Tank Y. 
 
-+ Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 11 times [CI 2, 67] more likely to forage during a trial than fish in Jar, xx times [CI xx, xx] than fish in Small, and xx times [CI xx, xx] than fish in Medium. In addition, fish were xx times [CI xx, xx] more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium.
++ Tank. Fish were more likely to forage during a trial in Large compared to Jar, Small and Medium. Again in accordance with the PCA and the results of Swimming and Resting. Fish in Large were on average 11 times [CI 2, 67] more likely to forage during a trial than fish in Jar for example. In addition, fish were more likely to forage during a trial in Large than Barren. In accordance with the PCA and the results of Swimming. This time, there was also a significant difference between small and medium unlike Resting.
 
 ## Between-fish diff
 
 ```{r}
 rpt.foraging <- rpt(Foraging.bin ~ Tank + Time + Filter + Order + (1|Fish), grname = "Fish", data = data, datatype = "Binary", nboot = 0, npermut = 0)
-# can calculate repeatability but not the CI. I tried using bootstrap and permutation.
 
 # Likelihood ratio test of random effect
 mForaging0 <- glmmTMB(Foraging.bin ~ Tank + Time + Filter + Order, data = data, family =binomial)
@@ -449,7 +441,7 @@ anova(mForaging0, mForaging)
 print(VarCorr(mForaging),comp=c("Variance"), digits=2)
 ```
 
-Can calculate the repeatability but not its CI. Cannot calculate repeatability for Stereotypic swimming anyway. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable.
+Can calculate the repeatability but not its CI. I tried using bootstrap and permutation. Cannot calculate repeatability for Stereotypic swimming anyway. Hard to estimate repeatability on binary data. I don't know how to do it without the package rptR. I think we don't have enough data power anyway to calculate repeatability with a binary variable.
 
 Likelihood ratio test indicates a statistically significant random effect. Meaning that fish behaved differently among each others in terms of foraging. 
 
@@ -459,8 +451,6 @@ Likelihood ratio test indicates a statistically significant random effect. Meani
 mForaging_res <- simulateResiduals(mForaging)
 plot(mForaging_res)
 plotResiduals(mForaging_res, form = data$Tank)
-plotResiduals(mForaging_res, form = data$Time)
-plotResiduals(mForaging_res, form = data$Filter)
 ```
 
 The model seems good.
@@ -507,7 +497,7 @@ contr_tank.enrich_bin(mSS)
 
 Effect of Tank. 
 
-+ Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Fish in Small were xx times [CI xx, xx] more likely to perform stereotypic swimming during a trial than fish in Jar. Almost significant difference between Large and Barren: Fish in Barren were 3.4 times [CI xx, xx] more likely to perform stereotypic swimming during a trial than fish in Large.
++ Tank. Jar were less likely to perform stereotypic swimming during a trial than Small/Medium/Large but only significant between Jar and Small. Almost significant difference between Large and Barren: Fish in Barren were 3.4 times more likely to perform stereotypic swimming during a trial than fish in Large.
 
 ## Between-fish diff
 
@@ -532,11 +522,7 @@ Likelihood ratio test indicates a statistically significant random effect. Meani
 mSS_res <- simulateResiduals(mSS)
 plot(mSS_res)
 plotResiduals(mSS_res, form = data$Tank)
-plotResiduals(mSS_res, form = data$Time)
-plotResiduals(mSS_res, form = data$Filter)
-# Problem with Filter, I retried the model without Filter
-mSS2 <- glmmTMB(SS.bin ~ Tank + Time + (1|Fish), data = data, family =binomial)
-plot(simulateResiduals(mSS2))
+
 ```
 
 It is expected to have a problem with filter as there are more than twice more trials without filter than with filter. No problem when removing Filter from the model. The model seems good.
@@ -544,6 +530,8 @@ It is expected to have a problem with filter as there are more than twice more t
 ## Stereotypic types
 
 Just a plot with the type of stereotypic swimming depending on the tank. To stick with the analysis, it is a count (count = 1 if the fish performs a certain type of stereotypic swimming during a trial). 
+
+The second plot groups similar stereotypic types together.
 
 ```{r}
 #| column: page
@@ -558,7 +546,7 @@ ggplot(data_SST, aes(fill = Stereotypic.swimming.type, x = Tank))+
     theme(legend.position="bottom")+
     ylab("Count of trials")
 
-# Grouping type of stereotypic swimming together
+# Grouping some types of stereotypic swimming together
 data_SST$Stereotypic.swimming.type2 <- factor(data_SST$Stereotypic.swimming.type, 
                                               labels = c("Circles", "Pacing", "Pacing", "Pacing","Pacing", "Zig Zag"))
 
@@ -571,6 +559,8 @@ ggplot(data_SST, aes(fill = Stereotypic.swimming.type2, x = Tank))+
 It seems that there are not differences between tanks. Just circles seem specific to larger tanks (Medium/Large/Barren).
 
 ## Stereotypic Swimming repetitions
+
+For example, repetition of pacing means how many times did the fish do one unit of pacing = one pace. 
 
 ```{r}
 #| column: page
@@ -592,7 +582,9 @@ I don't think there are enough data to really say something about the number of 
 
 :::
 
-# Interaction with Surface
+# Interaction with walls
+
+Interaction with walls was formerly interaction with surface. We changed in the last stage because of the potential confusion with the water surface. 
 
 ::: {.panel-tabset}
 
@@ -627,7 +619,7 @@ contr_tank.enrich_bin(mInteracting)
 
 Effect of Tank.
 
-+ Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). Fish in Jar were x times [CI xx, xx] more likely to interact with the surface during a trial than fish in Large, and Fish in Medium were x times [CI xx, xx] then fish in Large. In addition, fish were xx times [CI xx, xx] more likely to interact with a surface during a trial in Barren than in Large. 
++ Tank. Fish were more likely to interact with the surface during a trial in Jar/Medium compared to Large (not significant for Small). In addition, fish were more likely to interact with a surface during a trial in Barren than in Large. 
 
 ## Between-fish diff
 
@@ -735,7 +727,6 @@ Likelihood ratio test indicates a statistically significant random effect. Meani
 mNest_res <- simulateResiduals(mNest)
 plot(mNest_res)
 plotResiduals(mNest_res, form = data$Tank)
-plotResiduals(mNest_res, form = data$Time)
 plotResiduals(mNest_res, form = data$Filter)
 ```
 
@@ -745,7 +736,12 @@ The model seems good.
 
 # Hovering
 
-To analyse the amount of time the fish was hovering on the 204 trials with hovering time > 0, we tried different models described in "Analysis_Hovering". The best model was a linear mixed model on the amount of time spent hovering with weighted least squares (WLS). We had to use WLS because the error variance was increasing with the fitted values-higher error variance associated with high hovering time values. It was not possible to use WLS with the lmer package so we had to use the nlme package. The nlme package does not handle confounding levels of two factors - the fact that Tank = Barren is the same as Order = 5. So we had to remove Order from the analysis. The addition of Order was not changing the analysis outcomes in the other models. 
+We analysed hovering in two models:
+
++ a glm with the occurence of hovering during a trial as the response variable (binary variable) like for Foraging, Steterotypic Swimming, etc
++ a lm with the amount of time hovering during a trial (continuous variable). We had 204 trials with hovering time > 0. 
+
+For the lm, we tried different models described in "Analysis_Hovering". The best model was a linear mixed model on the amount of time spent hovering with weighted least squares (WLS). We had to use WLS because the error variance was increasing with the fitted values-higher error variance associated with high hovering time values. It was not possible to use WLS with the lmer package so we had to use the nlme package. The nlme package does not handle confounding levels of two factors - the fact that Tank = Barren is the same as Order = 5. So we had to remove Order from the analysis. The addition/removal of Order was not changing the analysis outcomes in the other models. 
 
 ::: {.panel-tabset}
 
@@ -756,12 +752,11 @@ hist1(data$Hovering)
 table(data$Hovering==0)
 descdist(data$Hovering, boot = 1000, print = FALSE)
 quantile(data$Hovering)
-hist1(data$Hovering[data$Hovering!=0]) # histogram without the zeros
+# histogram without the zeros
+hist1(data$Hovering[data$Hovering!=0]) 
 ```
 
 Even if there are less zeros than Foraging or Stereotypic Swimming, it is not a normal distribution. There were only 48 trials (out of 252) during which no hovering happened. So 204 trials where we could study the amount of time hovering in 204 trials. 
-
-We fitted a glm distribution like Foraging and Stereotypic Swimming on the probability to hover (dependent variable is 1 if hovering occurred during the trial, zero otherwise).
 
 ## Plot 
 
@@ -801,8 +796,8 @@ print(VarCorr(mHovering),comp=c("Variance"), digits=2)
 
 No effect of Tank on the probability to hover during a trial, only an effect of Time and Filter
 
-+ Time. Fish were more likely to hover in the morning.
-+ Filter. Fish were less likely to hover with a filter in their tank.
++ Time. It seems that fish were more likely to hover in the morning.
++ Filter. It seems that fish were less likely to hover with a filter in their tank.
 
 ```{r}
 mHovering_res <- simulateResiduals(mHovering)
@@ -829,8 +824,8 @@ emmeans(mHovering2, ~ Filter)
 Effect of Tank, Time and Filter.
 
 + Tank. Jar hovered significantly more time than Small, Medium and Large. Fish in Jar hovered 53 sec [CI 20, 85] more than Small (over a 600 sec trial), 53 sec [CI 20, 86] more than Medium, and 61 sec [CI 28, 93] more than Large. Fish in medium hovered more time than fish in Large. In addition, fish in Barren hovered significantly more time (22 sec [CI 12, 35]) than fish in Large.
-+ Time. Fish hovered more time in the middle of the day.
-+ Filter. Fish hovered less time with a filter in their tank.
++ Time. It seems that fish hovered more time in the middle of the day.
++ Filter. It seems that fish hovered less time with a filter in their tank.
 
 ```{r}
 plot(mHovering2, resid(., type = "pearson") ~ fitted(.), aspect = 1, pch = 21, abline = 0)
@@ -871,16 +866,16 @@ data_HP %>%
   guides(fill = guide_legend(reverse = TRUE))
 ```
 
-Fish used different places for hovering in all tanks.
+Fish used different places for hovering.
 
 :::
 
 
 # Up and down 
 
-::: {.panel-tabset}
+We scored whether the fish was on the upper half or lower half of the tank for all behaviours. Research question: did fish use differently use the upper part or lower part of their tank depending of the tank type?
 
-Research question: did fish use differently use the upper part or lower part of their tank depending of the tank type?
+::: {.panel-tabset}
 
 ## Plot
 ```{r}
@@ -898,6 +893,7 @@ It seems that the tank has an influence on whether fish prefer being on the uppe
 ## Model
 
 We can do different models:
+
 + Look at the percentage of time spent up of the trial. Fit a beta distribution. Problem: All percentages need to be 0 < perc < 100%. There are trials with 100% so we can't use beta distribution. 
 
 + Look at the count of seconds (how many seconds the fish spend up of the tank). Fit a binomial distribution. Problem: The diagnostics plots were very bad when fitting mUp <- glmmTMB(cbind(up, down) ~ Tank + Time + Filter + (1|Fish), data = dataUpDown, family = binomial)
@@ -916,8 +912,8 @@ emmeans(mUp, ~ Filter) # estimated means of time spent swimming depending on the
 Effect of Tank, Time and Filter. 
 
 + Tank. Statistically significant difference between Small and Medium/Jar: Fish in Small tank spent on average 103 more seconds [95% CI 26, 181] on the upper half of the tank compared to fish in Medium tanks. At the opposite, Fish in Small tank spent on average 71 more seconds [95% CI 26, 181] on the lower half of the tank compared to fish in Jar tanks. 
-+ Time. Fish spent more time on the upper half of the tank in the morning.
-+ Filter. Fish spent more time on the upper half of the tank with a filter in their tank.
++ Time. It seems that fish spent more time on the upper half of the tank in the morning.
++ Filter. It seems that fish spent more time on the upper half of the tank with a filter in their tank.
 
 ## Diagnosis
 

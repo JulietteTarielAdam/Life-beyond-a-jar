@@ -48,7 +48,7 @@ mHovering <- glmmTMB(round(Hovering,0) ~ Tank + Time + Filter + (1|Fish), data =
 mHovering_res <- simulateResiduals(mHovering)
 plot(mHovering_res)
 
-# poisson on positive hovering data
+# poisson without the zeros
 mHovering <- glmmTMB(round(Hovering,0) ~ Tank + Time + Filter + (1|Fish), data = data[data$Hovering >0,], family =poisson)
 mHovering_res <- simulateResiduals(mHovering)
 plot(mHovering_res)
@@ -126,7 +126,7 @@ boxplot(resid(mHovering, type = "pearson")~ Tank, data =  data2)
 
 The normality is not great but ANOVA are robust to the assumption of normality.
 
-However, the model is not working when including Order. The nlme package does not handle rank-deficient models. The lmer does not handle increasing error variance with fitted values automatically. Below I tried to implement increasing error variance with fitted values using lmer package.
+However, the model is not working when including Order. The nlme package does not handle rank-deficient models. The lmer does not handle increasing error variance with fitted values automatically. On the next tab, I tried to implement increasing error variance with fitted values using lmer package.
 
 # Ajusted weigthts lmer
 

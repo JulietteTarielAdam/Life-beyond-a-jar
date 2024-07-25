@@ -627,7 +627,7 @@
     },
     "datawizard": {
       "Package": "datawizard",
-      "Version": "0.10.0",
+      "Version": "0.12.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -636,7 +636,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "62d6ec10346d3302a1299e1c54641d83"
+      "Hash": "4070785c656b9ded5d0ed5db387a96d5"
     },
     "dbplyr": {
       "Package": "dbplyr",
@@ -1374,7 +1374,7 @@
     },
     "insight": {
       "Package": "insight",
-      "Version": "0.19.10",
+      "Version": "0.20.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1383,7 +1383,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "c15a38c9655cba66f5f5537a14c1bef4"
+      "Hash": "74a0751aafb4d4bc140531e46deda4ab"
     },
     "isoband": {
       "Package": "isoband",
@@ -1588,6 +1588,38 @@
       ],
       "Hash": "7ce2733a9826b3aeb1775d56fd305472"
     },
+    "mclogit": {
+      "Package": "mclogit",
+      "Version": "0.9.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "memisc",
+        "methods",
+        "stats"
+      ],
+      "Hash": "a940a79acafab3eeb07fa8d632ea55fa"
+    },
+    "memisc": {
+      "Package": "memisc",
+      "Version": "0.99.31.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "MASS",
+        "R",
+        "data.table",
+        "grid",
+        "jsonlite",
+        "lattice",
+        "methods",
+        "stats",
+        "utils",
+        "yaml"
+      ],
+      "Hash": "2aaec15a757be7c405ffc0f1a0f68e35"
+    },
     "memoise": {
       "Package": "memoise",
       "Version": "2.0.1",
@@ -1773,7 +1805,7 @@
     },
     "performance": {
       "Package": "performance",
-      "Version": "0.11.0",
+      "Version": "0.12.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1784,7 +1816,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "eb8ecde248cd610ae3097f5d00718cbd"
+      "Hash": "6d0d9762077b82869a0ea9b17787b01e"
     },
     "pillar": {
       "Package": "pillar",

@@ -33,7 +33,7 @@ We tried a PCA on:
   * PCA using non-scaled variables can quantitatively interpret the differences.
   * But it gives more importance to behavioural variables that have the more variance. And I don't see why we should give more importance to certain variables or not. A difference of 10 sec in stereotypic swimming might be as relevant as a difference of 50 s swimming.
 
-So we decide to do PCA using scaled variables because of this last point: we don't want to give more importance to behaviours with the most variance. (And also the circle of correlations looks worst with non-scaled variables = less easy to interpret.As our behaviour variables were very different in variance, the length of the arrows in the circle of correlations are very different).
+So we decide to do PCA using scaled variables because of this last point: we don't want to give more importance to behaviours with the most variance. (And also the circle of correlations looks worst with non-scaled variables = less easy to interpret. As our behaviour variables were very different in variance, the length of the arrows in the circle of correlations are very different).
 
 Also, I was concerned of running PCA on repeated measures, but apparently it is not a big deal.
 
@@ -76,6 +76,8 @@ rowSums(pcaS$var$contrib[,1:3])
 As the 4th axis is difficult to interpret, we could keep 3 easy-interpretable components to explain 57% of the variance. 57% of the variance is not a lot... We thus decided to study behaviours individually. The advantage of studying behaviours individually is also to be able to interpret quantitatively the differences between treatments (like said before, 100 sec difference between tank X and tank Y).
 
 Sinking.Floating (and to a lesser extent Interaction.with.surface) is not very useful for the first 4 components, so not useful to explain the variability between trials (and this even though they are scaled = contribute to the PCA to the same extent that variables with higher initial variance).
+
+Below plot of the first two components with tank or fish ellipses overlaid.
 
 ```{r}
 fviz_pca_biplot(pcaS, geom.ind = "point", col.ind = data$Tank, col.var="black",

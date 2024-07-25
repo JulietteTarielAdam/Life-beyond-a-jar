@@ -26,7 +26,7 @@ data <- data %>% mutate(Tank = fct_recode(Tank, `Large-Barren` = "Barren"))
 levels(data$Tank)
 ```
 
-# PCA
+# plot PCA
 ```{r}
 pca2 <- data2 %>% 
   mutate(Interation.with.the.walls = Interation.with.surface) %>% 
@@ -51,9 +51,9 @@ pca2 <- data2 %>%
 ggsave(plotPCA, filename = "Plots/PCA.png", width = 10.3, height = 5.75)
 ```
 
-# Tank 
+# plot summary
 
-## Plot summary
+## Overall summary 
 
 ```{r}
 theme.new <- theme_classic()+ theme(axis.title.x = element_blank(),
@@ -101,7 +101,7 @@ theme.new <- theme_classic()+ theme(axis.title.x = element_blank(),
 ggsave(plot.fig1 , filename = "Plots/Fig1.png",width = 8.11, height = 12.98)
 ```
 
-## One plot = one behaviour
+## Plot by behaviour
 
 ```{r}
 (plotA <- plot_var(data, "Swimming") +
@@ -167,9 +167,9 @@ ggsave(plot.fig1 , filename = "Plots/Fig1.png",width = 8.11, height = 12.98)
 ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
 ```
 
-# Individual fish
+# plot by individual fish
 
-## Summary
+## Overall ummary
 
 ```{r}
 (plot.fish1 <-tf(data, grouping = "Fish", beh.cols, colMeans) %>% 
@@ -188,7 +188,7 @@ ggsave(plot2, filename = "Plots/Fig2.png", width = 5.4, height = 10)
 ggsave(plot.fish1, filename = "Plots/FigFish.png", width = 8.27, height = 6.27)
 ```
 
-## One plot = one behaviour
+## plot by behaviour
 
 ```{r}
 theme.new2 <- theme_classic()+ theme(
@@ -238,57 +238,45 @@ ggsave(plot.line , filename = "Plots/FigFish2.png",width = 12, height = 12)
 
 We tried the graph with rare behaviours such as Stereotypic swimming. But the results cannot be read as multiple individual lines were stacked at 0 (many fish never performed SS in any tank).
 
-# Resting place
+# plot Resting place
 
 ```{r}
-(plotRPtank <- data_RP %>% group_by(Tank, Resting.place) %>% summarise(Resting = mean(percentage)) %>% 
-   ggplot(., aes(y = Resting, x = Tank,fill = Resting.place))+
+(plotRPtank <- data_RP2 %>% 
+   pivot_longer(names_to = "Resting.place", values_to = "Perc",
+                cols = Floor.perc:filter.perc) %>%
+   group_by(Tank, Resting.place) %>% 
+   summarise(Perc = mean(Perc,na.rm =TRUE)) %>% 
+   mutate(Resting.place = factor(Resting.place,
+levels = c("Floor.perc","Plants.perc","Barrel.perc","filter.perc","Surface.perc"),
+labels = c("Floor", "Plants (Furnish.)","Barrel (Furnish.)","Filter (Furnish.)","Water surface"))) %>% 
+   ggplot(., aes(y = Perc, x = Tank,fill = Resting.place))+
    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
    scale_fill_manual(values=palette_RP)+
+   guides(fill = guide_legend(reverse = TRUE)) +
    theme(legend.title = element_blank())+
    ylab("% of resting time")+
    scale_y_continuous(labels=c(0,25,50,75,100))+
    ggtitle("A"))
 
-(plotRPfish <- data_RP %>% group_by(Fish, Resting.place) %>% summarise(Resting = mean(percentage)) %>% 
-    ggplot(., aes(y = Resting, x = Fish,fill = Resting.place, width=.75))+
+(plotRPfish <- data_RP2 %>% 
+    pivot_longer(names_to = "Resting.place", values_to = "Perc",
+                 cols = Floor.perc:filter.perc) %>%
+    group_by(Fish, Resting.place) %>% 
+    summarise(Perc = mean(Perc,na.rm =TRUE)) %>% 
+    mutate(Resting.place = factor(Resting.place,
+levels = c("Floor.perc","Plants.perc","Barrel.perc","filter.perc","Surface.perc"),
+labels = c("Floor", "Plants (Furnish.)","Barrel (Furnish.)","Filter (Furnish.)","Water surface"))) %>% 
+    ggplot(., aes(y = Perc, x = Fish,fill = Resting.place, width=.75))+
     geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
     scale_fill_manual(values=palette_RP)+
     scale_y_continuous(labels=c(0,25,50,75,100)) +
     ylab("% of resting time")+
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
           axis.title.y = element_blank())+
+    guides(fill = guide_legend(reverse = TRUE)) +
     ggtitle("B"))
 
 (plotRP <- ggarrange(plotRPtank,plotRPfish, align = "h", widths = c(0.5, 1),
-                    common.legend = TRUE, legend = "top", nrow = 1))
+                     common.legend = TRUE, legend = "top", nrow = 1))
 ggsave(plotRP, filename = "Plots/FigRP.png", width = 6.07, height = 4.22)
 ```
-
-# Interaction with surface
-
-```{r}
-(plotITtank <- data_IT %>% group_by(Tank, IT) %>% summarise(Interation.with.surface = mean(Interation.with.surface)) %>% 
-   ggplot(., aes(y = Interation.with.surface, x = Tank,fill = IT))+
-   geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-   scale_fill_manual(values=palette_IT)+
-   theme(legend.title = element_blank())+
-   ylab("% of interaction time")+
-   scale_y_continuous(labels=c(0,25,50,75,100))+
-   ggtitle("A"))
-
-(plotITfish <- data_IT %>% group_by(Fish, IT) %>% summarise(Interation.with.surface = mean(Interation.with.surface)) %>% 
-    ggplot(., aes(y = Interation.with.surface, x = Fish,fill = IT, width=.75))+
-    geom_bar(position = position_fill(reverse = TRUE), stat = "identity", color = "black")+
-    scale_fill_manual(values=palette_IT)+
-    scale_y_continuous(labels=c(0,25,50,75,100)) +
-    ylab("% of interaction time")+
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-          axis.title.y = element_blank())+
-    ggtitle("B"))
-
-(plotIT <- ggarrange(plotITtank,plotITfish, align = "h", widths = c(0.5, 1),
-                    common.legend = TRUE, legend = "top", nrow = 1))
-ggsave(plotIT, filename = "Plots/FigIT.png", width = 6.07, height = 4.22)
-```
-

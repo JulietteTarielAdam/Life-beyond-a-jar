@@ -4,8 +4,8 @@ library(tidyverse)
 ## for plots
 library(ggplot2) 
 library(ggpubr) # assemble multiple plots
-library(ggrepel)
-library(ggforce) # facet_wrap_paginate
+library(ggrepel) # for fish ID labels
+library(ggforce) # for the function facet_wrap_paginate
 theme_set(theme_classic())
 library(RColorBrewer) # nice color palette
 ## for PCA analysis
@@ -21,6 +21,8 @@ library(DHARMa) # estimate residuals for the GLMMs to do the diagnosis of the mo
 library(rptR) # estimate CI of repeatability
 library(performance) # for the function check_model
 library(nlme) # for the linear model of Hovering with weighted least squares
+## for multinomial regression model
+library(mclogit)
 
 # The loaded file is the Master.csv and not the excel Master.xlsx
 master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
@@ -110,7 +112,7 @@ data$Nest.bin <- factor(ifelse(data$Nest.building != 0, "Yes", "No"))
 data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar") %>% 
   filter(!(Resting.place ==""), !(Resting.place =="N/A"), !is.na(Resting)) %>% 
   dplyr::select(Fish, Tank, Order, Time, Filter, Resting, Resting.place) %>% 
-  # concatenate resting places to only three types
+  # Resting place: concatenate resting places to only three types
   mutate(Resting.place = factor(Resting.place,
                                 levels = c("Floor","Surface",      "Surface against plant","Under or against plant","Plant leaves", "On or against barrel", "Inside barrel","Filter"),
                                 labels = c("Floor","Water.surface","Furnishings",          "Furnishings",           "Furnishings",  "Furnishings",          "Furnishings",  "Furnishings")),
@@ -126,7 +128,38 @@ data_RP <- master %>% filter(Tank!= "Barren", Tank != "Jar") %>%
   mutate(Total.trial = Floor + Water.surface + Furnishings,
          Floor.perc = Floor / Total.trial,
          Surface.perc = Water.surface / Total.trial,
-         Furn.perc = Furnishings / Total.trial)
+         Furn.perc = Furnishings / Total.trial,
+         trial = factor(1:nrow(.),), # for the random intercept trial
+         ExpSetting = factor(paste0(Tank, Order, Filter, Time)) # for the random intercept ExpSetting
+)
+
+## data_RP2 with the furnishings category split into plants, filter and barrel
+data_RP2 <- master %>% filter(Tank!= "Barren", Tank != "Jar") %>% 
+  filter(!(Resting.place ==""), !(Resting.place =="N/A"), !is.na(Resting)) %>% 
+  dplyr::select(Fish, Tank, Order, Time, Filter, Resting, Resting.place) %>% 
+  # Resting place: concatenate resting places to only three types
+  mutate(Resting.place2 = factor(Resting.place,
+                                 levels = c("Floor","Surface",      "Surface against plant","Under or against plant","Plant leaves","On or against barrel", "Inside barrel","Filter"),
+                                 labels = c("Floor","Water.surface","Plants"               ,"Plants"                ,"Plants"      ,"Barrel"              ,"Barrel"        ,"filter")),
+         
+         Tank = fct_drop(Tank)) %>% 
+  # add similar scores for up and down
+  group_by(Fish, Tank, Order, Time, Filter, Resting.place2) %>% 
+  summarize(Resting = sum(Resting), .groups = "drop") %>% 
+  # add zeros when the fish has not rested in a specific place for this trial
+  complete(nesting(Fish, Tank, Order, Time, Filter), Resting.place2, fill = list(Resting = 0)) %>% 
+  filter(!(Tank == "Small"&Resting.place2=="Barrel"),
+         !(Tank == "Medium"&Resting.place2=="Barrel"),
+         !(Filter == "No-filter"&Resting.place2=="filter")) %>% 
+  pivot_wider(names_from = Resting.place2, values_from = Resting)  %>% 
+  dplyr::select(Fish, Tank, Order, Time, Filter,Floor, Water.surface, Plants, Barrel, filter) %>% 
+  mutate(Total.trial = rowSums(across(c(Floor, Water.surface,Plants,Barrel, filter)), na.rm = TRUE),
+         Floor.perc = Floor / Total.trial,
+         Surface.perc = Water.surface / Total.trial,
+         Plants.perc = Plants / Total.trial,
+         Barrel.perc = Barrel / Total.trial,
+         filter.perc = filter / Total.trial
+  )
 
 ## verification
 table(paste(data_RP$Fish, data_RP$Tank) , data_RP$Time)
