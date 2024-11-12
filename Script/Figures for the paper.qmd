@@ -207,6 +207,8 @@ plot_var_fish2 <- function(data, variable){
   # No Barren data for Merlion
   means_fish <- within(means_fish, label[Tank == "Large" & Fish == "Merlion"] <- "Merlion") 
 
+  
+  
   ggplot(means_fish ,aes_string(y = variable, x = "Tank", color="Fish")) +
     geom_line(aes(group=Fish), lwd = 1.2) + 
     guides(color="none")+
@@ -216,6 +218,8 @@ plot_var_fish2 <- function(data, variable){
                      size = 3.5, fontface = "bold")+
     scale_x_discrete(drop=FALSE) 
 }
+
+
 
 (plot.lineA <- plot_var_fish2(data, "Swimming") +
    ylab("Time spent swimming (sec)")+
@@ -227,7 +231,7 @@ plot_var_fish2 <- function(data, variable){
    ggtitle("B. Resting")+
     theme(theme.new2))
 
-(plot.lineC <- plot_var_fish2(subset(data, Hovering >0), "Hovering") +
+(plot.lineC <- plot_var_fish2(data, "Hovering") +
    ylab("Time spent hovering (sec)")+
    ggtitle("C. Hovering")+
     theme(theme.new2))
@@ -259,6 +263,7 @@ labels = c("Floor", "Plants (Furnish.)","Barrel (Furnish.)","Filter (Furnish.)",
    ggtitle("A"))
 
 (plotRPfish <- data_RP2 %>% 
+    arrange(Floor) %>% 
     pivot_longer(names_to = "Resting.place", values_to = "Perc",
                  cols = Floor.perc:filter.perc) %>%
     group_by(Fish, Resting.place) %>% 
