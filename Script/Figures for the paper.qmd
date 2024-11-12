@@ -207,8 +207,6 @@ plot_var_fish2 <- function(data, variable){
   # No Barren data for Merlion
   means_fish <- within(means_fish, label[Tank == "Large" & Fish == "Merlion"] <- "Merlion") 
 
-  
-  
   ggplot(means_fish ,aes_string(y = variable, x = "Tank", color="Fish")) +
     geom_line(aes(group=Fish), lwd = 1.2) + 
     guides(color="none")+
@@ -218,8 +216,6 @@ plot_var_fish2 <- function(data, variable){
                      size = 3.5, fontface = "bold")+
     scale_x_discrete(drop=FALSE) 
 }
-
-
 
 (plot.lineA <- plot_var_fish2(data, "Swimming") +
    ylab("Time spent swimming (sec)")+

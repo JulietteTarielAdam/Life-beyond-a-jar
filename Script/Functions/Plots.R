@@ -14,7 +14,7 @@ palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
 
 ## Resting place
 #palette_RP <- c("#F3C8AC","#76ad5e","#96824a","#a7aba6", "#A0F1FF")
-palette_RP <- viridis_pal(direction = -1, option = "C")(5)
+palette_RP <- viridis_pal(direction = -1, option = "A")(6)[1:5]
 
 ## Hovering place
 palette_HP <- c("#E3C9B8", "#6eacc4", "#89D7F5", "#d0effb","#6B4921")
