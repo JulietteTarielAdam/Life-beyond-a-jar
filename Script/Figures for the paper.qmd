@@ -70,7 +70,10 @@ theme.new <- theme_classic()+ theme(axis.title.x = element_blank(),
    ggtitle("A. Tank")+
     theme(theme.new))
 
-(plot.time <- plot1("Time") + 
+# Change to 24h format
+data$Time2 <- data$Time
+levels(data$Time2) <- c("07:00", "10:00", "14:00", "18:00")
+(plot.time <- plot1("Time2") + 
     ylab("Time spent doing the behaviour (sec)")+
    scale_fill_manual(values = palette.beh,
                      labels = c("Swimming", "Resting", "Hovering", "Stereotypic swimming", "Nest building", "Foraging", "Interation with the walls"),
