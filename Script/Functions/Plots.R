@@ -10,7 +10,8 @@ palette.beh2 <- viridis_pal(direction = -1, option = "D")(8)
 palette.beh3 = c(palette.beh2,"grey") 
 
 ## Fish
-palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
+# palette.fish <- c(brewer.pal(12, "Set3")[-2],brewer.pal(8, "Dark2")[c(1,8)])
+palette.fish <- viridis_pal(option = "H")(13)
 
 ## Resting place
 #palette_RP <- c("#F3C8AC","#76ad5e","#96824a","#a7aba6", "#A0F1FF")
