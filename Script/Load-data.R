@@ -25,7 +25,7 @@ library(nlme) # for the linear model of Hovering with weighted least squares
 library(mclogit)
 
 # The loaded file is the Master.csv and not the excel Master.xlsx
-master <- read.table("Script/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
+master <- read.table("Data/Master.csv", sep = ",", dec = ".", header = TRUE, stringsAsFactors = TRUE)
 
 # change order or name of factor levels
 master$Order <- factor(master$Order)
