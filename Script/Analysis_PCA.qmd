@@ -1,5 +1,5 @@
 ---
-title: "PCA Analysis of Naomi's data. Influence of the tank on Betta's behaviour."
+title: "PCA Analysis"
 date: "`r Sys.Date()`"
 author: "Juliette Tariel-Adam"
 format: 
