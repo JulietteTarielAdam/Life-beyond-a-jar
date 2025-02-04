@@ -21,7 +21,7 @@ The data are stored two identical files in different formats, `Master.csv` and `
 - *Hovering*: Time the fish spent hovering in seconds
 - *Hovering place*: Place where the fish hovered (Above ground, Inside barrel, Just under surface, Just under surface (under bubble nest) or Mid water column)
 - *Sinking/Floating*: Time the fish spent sinking or floating
-- *Transition type*: XXXXX
+- *Transition type*: complimentary information about the transition between behaviours 
 - *Swimming*: Time the fish spent swimming in seconds
 - *Stereotypic swimming*: Time the fish spent stereotypic swimming in seconds
 - *Stereotypic swimming group/batch*: This column is used to identify stereotypic swimming times that belong to the same stereotypic swimming event. Since time spent stereotypic swimming was recorded separately depending on whether it occurred in the upper or lower half of the tank, a single event could be split across multiple rows. This column helps link those times to the same event batch.
@@ -34,7 +34,7 @@ The data are stored two identical files in different formats, `Master.csv` and `
 - *Nest building*: Time the fish spent building a nest
 - *Foraging*: Time the fish spent foraging
 
-The complexity of the data file arises because a single trial can span multiple rows. Different behaviors were recorded within the same row (e.g., time spent swimming and time spent hovering). However, a new row was created if the fish repeated a similar behavior that had already been recorded (e.g., if the fish started swimming again after previously swimming and then hovering).
+The complexity of the data file arises because a single trial can span multiple rows. Times spent doing each behaviour were recorded on the same row as long as they were different behaviours (e.g., time spent swimming and time spent hovering). However, a new row was created if the fish repeated a similar behaviour that had already been recorded (e.g., if the fish started swimming again after previously swimming and then hovering).
 
 # Script folder
 
@@ -47,11 +47,11 @@ The complexity of the data file arises because a single trial can span multiple 
 + 📄 `Analysis_Hovering.qmd` contains attempts to analyse the time spent hovering. 
 + 📄 `Figures for the paper.qmd` generates the figures for the paper.
 
-Some scripts are also available in HTML format, providing both the code and the corresponding plots and analysis outputs.
+Scripts in QMD format are also available in HTML format, providing both the code and the corresponding plots and analysis outputs.
 
 ## Sub-folder: Functions 
 
-+ 📄 `Linear-model.R` contains functions for providing diagnostic and contrats of the linear models.
++ 📄 `Linear-model.R` contains functions providing diagnostic and contrasts of the linear models.
 + 📄 `Plots.R` contains functions for generating the plots. 
 
 ## Sub-folder: Repeatability rptR output
